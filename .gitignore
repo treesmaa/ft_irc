@@ -1,6 +1,8 @@
 # Dev container
 .devcontainer/
 
+.github
+
 # OS
 .DS_Store
 
