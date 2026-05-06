@@ -1,3 +1,9 @@
+# Dev container
+.devcontainer/
+
+# OS
+.DS_Store
+
 # Prerequisites
 *.d
 
