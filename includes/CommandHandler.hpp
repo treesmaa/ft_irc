@@ -1,0 +1,4 @@
+#ifndef COMMANDHANDLER_HPP
+#define COMMANDHANDLER_HPP
+
+#endif
