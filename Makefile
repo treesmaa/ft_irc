@@ -5,13 +5,27 @@ CXXFLAGS := -Wall -Wextra -Werror -std=c++98 -MMD -MP
 
 INCLUDES := -Iincludes
 
-SRC := \
-	src/main.cpp \
-	src/server/Server.cpp \
-	src/client/Client.cpp \
-	src/channel/Channel.cpp \
+SRC_MAIN 	:= src/main.cpp
+
+SRC_SERVER	:= \
+	src/server/Server.cpp
+
+SRC_CLIENT	:= \
+	src/client/Client.cpp
+
+SRC_CHANNEL := \
+	src/channel/Channel.cpp
+
+SRC_COMMAND := \
 	src/command/CommandParser.cpp \
 	src/command/CommandHandler.cpp
+
+SRC := \
+	$(SRC_MAIN) \
+	$(SRC_SERVER) \
+	$(SRC_CLIENT) \
+	$(SRC_CHANNEL) \
+	$(SRC_COMMAND)
 
 OBJS_DIR := obj/
 
