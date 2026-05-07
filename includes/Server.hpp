@@ -3,8 +3,13 @@
 
 #include <stdexcept>
 #include <iostream>
+#include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <unistd.h>
+#include <cstring>
+#include <cerrno>
+#include <cstdlib>
 
 class Server {
     public:
@@ -14,10 +19,12 @@ class Server {
         Server& operator=(const Server& other);
         ~Server();
 
-        int start(void);
+        void boot(void);
     private:
-        std::string _port;
-        std::string _password;
+        char         		*_port;
+        std::string         _password;
+        int                 _sockfd;
+        struct sockaddr_in	_addr;
 };
 
 #endif

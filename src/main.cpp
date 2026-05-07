@@ -8,10 +8,11 @@ int main(int argc, char **argv) {
     }
     try {
         Server server(argv[1], argv[2]);
-        server.start();
+        server.boot();
     }
     catch(const std::exception& e) {
-        std::cerr << e.what() << std::endl;
+        std::cerr << "Exception caught: " << e.what() << std::endl;
+        return 2;
     }
     return 0;
 }
