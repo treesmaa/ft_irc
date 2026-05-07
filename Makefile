@@ -7,19 +7,15 @@ INCLUDES := -Iincludes
 
 SRC_MAIN 	:= src/main.cpp
 
-SRC_SERVER	:= \
-	src/server/Server.cpp
+SRC_SERVER	:= src/server/Server.cpp \
 
-SRC_CLIENT	:= \
-	src/client/Client.cpp
+SRC_CLIENT	:= src/client/Client.cpp \
 
-SRC_CHANNEL := \
-	src/channel/Channel.cpp
+SRC_CHANNEL := src/channel/Channel.cpp \
 
-SRC_COMMAND := \
+SRC_COMMAND := src/command/CommandHandler.cpp \
 	src/command/CommandParser.cpp \
-	src/command/CommandHandler.cpp
-
+	
 SRC := \
 	$(SRC_MAIN) \
 	$(SRC_SERVER) \

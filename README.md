@@ -8,3 +8,5 @@ IRC server in C++98
 ## Instructions
 
 ## Resources
+- Internet Relay Chat: Server Protocol: https://datatracker.ietf.org/doc/html/rfc2813
+- 
