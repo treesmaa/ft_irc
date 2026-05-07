@@ -4,17 +4,31 @@ CXXFLAGS := -Wall -Werror -Wextra -std=c++98 -MMD -MP
 
 # Directories
 SRCS_DIR     := ./src/
-
+PARSING_DIR  := ./src/parsing/
+SERVER_DIR   := ./src/server/
+COMMANDS_DIR := ./src/commands/
 OBJS_DIR     := ./obj/
 INCLUDES_DIR := ./includes/
 
 # Source files per directory
 CFILES_ROOT     := main.cpp
 
+CFILES_PARSING  := parser.cpp \
+                   lexer.cpp
 
+CFILES_SERVER   := server.cpp \
+                   client.cpp \
+                   channel.cpp
+
+CFILES_COMMANDS := join.cpp \
+                   nick.cpp \
+                   privmsg.cpp
 
 # Object files (all flat in obj/)
 OBJ_FILES := $(CFILES_ROOT:.cpp=.o) \
+             $(CFILES_PARSING:.cpp=.o) \
+             $(CFILES_SERVER:.cpp=.o) \
+             $(CFILES_COMMANDS:.cpp=.o)
 
 OBJS := $(addprefix $(OBJS_DIR), $(OBJ_FILES))
 DEP  := $(OBJS:.o=.d)
@@ -45,5 +59,17 @@ re: fclean all
 # OBJECT RULES
 # -------------------------------------------------------------------
 $(OBJS_DIR)%.o: $(SRCS_DIR)%.cpp
+	@mkdir -p $(OBJS_DIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+$(OBJS_DIR)%.o: $(PARSING_DIR)%.cpp
+	@mkdir -p $(OBJS_DIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+$(OBJS_DIR)%.o: $(SERVER_DIR)%.cpp
+	@mkdir -p $(OBJS_DIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+$(OBJS_DIR)%.o: $(COMMANDS_DIR)%.cpp
 	@mkdir -p $(OBJS_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
