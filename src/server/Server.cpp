@@ -4,7 +4,7 @@ Server::Server() {}
 
 Server::Server(unsigned int port, char *password) : _port(port), _password(password) {
     std::cout << "Server class created. Port: " << port << ", Password: " << password << std::endl;
-    //add checks for password and listening port
+    //add checks for password?
 }
 
 Server::Server(const Server& original) {
@@ -37,6 +37,7 @@ void Server::boot() {
     //set socket fd in non-blocking mode
     if (fcntl(_sockfd, F_SETFL, O_NONBLOCK) == -1)
         throw std::runtime_error(std::string("failed to set socket to non-blocking: ") + strerror(errno));
+    
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;

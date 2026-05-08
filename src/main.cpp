@@ -1,5 +1,15 @@
 #include "Server.hpp"
 
+unsigned int convertPort(char *str) {
+    std::stringstream ss(str);
+    int port;
+
+    ss >> port;
+    if (ss.fail() || !ss.eof() || port < 1024 || port > 65535)//ports that can be used without root privilege
+        throw std::runtime_error("invalid port number");
+    return static_cast<unsigned int>(port);
+}
+
 int main(int argc, char **argv) {
 
     if (argc != 3) {
@@ -7,14 +17,7 @@ int main(int argc, char **argv) {
         return 1;
     }
     try {
-        std::stringstream ss(argv[1]);
-        int port;
-
-        ss >> port;
-        if (ss.fail() || !ss.eof() || port < 0 || port > 65535)
-            throw std::runtime_error("invalid port number");
-
-        Server server(port, argv[2]);
+        Server server(convertPort(argv[1]), argv[2]);
         server.boot();
     }
     catch(const std::exception& e) {
