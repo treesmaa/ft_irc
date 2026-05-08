@@ -50,5 +50,8 @@ void Server::boot() {
     if (listen(_sockfd, SOMAXCONN) == -1)
         throw std::runtime_error(std::string("failed to listen on socket: ") + strerror(errno));
 
+    while (1) {
+        
+    }
     close(_sockfd);
 }
