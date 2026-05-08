@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/poll.h>
 #include <unistd.h>
 #include <cstring>
 #include <cerrno>
