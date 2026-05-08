@@ -7,11 +7,18 @@ int main(int argc, char **argv) {
         return 1;
     }
     try {
-        Server server(argv[1], argv[2]);
+        std::stringstream ss(argv[1]);
+        int port;
+
+        ss >> port;
+        if (ss.fail() || !ss.eof() || port < 0 || port > 65535)
+            throw std::runtime_error("invalid port number");
+
+        Server server(port, argv[2]);
         server.boot();
     }
     catch(const std::exception& e) {
-        std::cerr << "Exception caught: " << e.what() << std::endl;
+        std::cerr << "Error: " << e.what() << std::endl;
         return 2;
     }
     return 0;
