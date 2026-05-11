@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netdb.h>
 #include <sys/poll.h>
 #include <unistd.h>
 #include <cstring>
@@ -17,7 +18,7 @@
 class Server {
     public:
         Server();
-        Server(unsigned int port, char *password);
+        Server(int port, char *password);
         Server(const Server& original);
         Server& operator=(const Server& other);
         ~Server();
@@ -25,7 +26,7 @@ class Server {
         void boot(void);
 
     private:
-        unsigned int        _port;
+        int                 _port;
         std::string         _password;
         int                 _sockfd;
 };

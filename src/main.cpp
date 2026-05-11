@@ -1,13 +1,13 @@
 #include "Server.hpp"
 
-unsigned int convertPort(char *str) {
+int convertPort(char *str) {
     std::stringstream ss(str);
     int port;
 
     ss >> port;
     if (ss.fail() || !ss.eof() || port < 1024 || port > 65535)//ports that can be used without root privilege
         throw std::runtime_error("invalid port number");
-    return static_cast<unsigned int>(port);
+    return port;
 }
 
 int main(int argc, char **argv) {
