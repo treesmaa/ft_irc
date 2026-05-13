@@ -14,6 +14,9 @@
 #include <cerrno>
 #include <cstdlib>
 #include <fcntl.h>
+#include <arpa/inet.h>
+
+#include "Client.hpp"
 
 class Server {
     public:
@@ -29,6 +32,7 @@ class Server {
         int                 _port;
         std::string         _password;
         int                 _sockfd;
+
 };
 
 #endif
