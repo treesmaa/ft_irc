@@ -24,11 +24,16 @@ std::string intToString(int n) {
 }
 
 void Server::addToPoll(int fd) {
-        struct pollfd p;
-        p.fd = fd;
-        p.events = POLLIN;
-        p.revents = 0;
-        pfds.push_back(p);
+    struct pollfd p;
+    p.fd = fd;
+    p.events = POLLIN;
+    p.revents = 0;
+    pfds.push_back(p);
+}
+
+void Server::removeFromPoll(int idx) {
+    close(pfds[idx].fd);
+    pfds.erase(pfds.begin() + idx);
 }
 
 void Server::printNewClient(struct sockaddr_storage client_addr) const {
@@ -110,7 +115,13 @@ void Server::boot() {
             throw std::runtime_error(std::string("poll() failed: ") + strerror(errno));
 
         for (int i = 0; i < pfds.size(); i++) {//loop through all pfds
-            if (pfds[i].revents & POLLIN) {
+            if (pfds[i].revents & POLLERR) {
+                throw std::runtime_error("POLLERR");//prob do not need to throw
+            }
+            else if (pfds[i].revents & POLLHUP) {
+                removeFromPoll(i);//rm client from pollfds
+            }
+            if (pfds[i].revents & POLLIN) {//accept new clients.
                 if (pfds[i].fd == server_fd) {
                     struct sockaddr_storage client_addr;
                     socklen_t addr_size = sizeof(client_addr);
@@ -122,7 +133,7 @@ void Server::boot() {
                 }
             }
             else {
-                continue;
+                continue;//handle existing clients data.
             }
         }
 
