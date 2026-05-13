@@ -15,7 +15,7 @@ SRC_CHANNEL := src/channel/Channel.cpp \
 
 SRC_COMMAND := src/command/CommandHandler.cpp \
 	src/command/CommandParser.cpp \
-	
+
 SRC := \
 	$(SRC_MAIN) \
 	$(SRC_SERVER) \

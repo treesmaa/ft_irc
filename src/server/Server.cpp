@@ -10,9 +10,9 @@ Server::Server(int port, char *password) : port(port), password(password), serve
 Server::~Server() {
     if (server_fd != -1)
         close(server_fd);
-    for (int i = 1; i < pfds.size(); i++) {
-        if (pfds[i].fd != -1)
-            close(pfds[i].fd);
+    for (std::vector<pollfd>::iterator it = pfds.begin(); it != pfds.end(); ++it) {
+        if (it->fd != -1)
+            close(it->fd);
     }
     std::cout << "Server class destroyed" << std::endl;
 }
@@ -114,9 +114,10 @@ void Server::boot() {
         if (poll(&pfds[0], pfds.size(), -1) == -1)
             throw std::runtime_error(std::string("poll() failed: ") + strerror(errno));
 
-        for (int i = 0; i < pfds.size(); i++) {//loop through all pfds
+        for (size_t i = 0; i < pfds.size(); i++) {//loop through all pfds
             if (pfds[i].revents & POLLERR) {
-                throw std::runtime_error("POLLERR");//prob do not need to throw
+                std::cerr << "POLLERR on fd " << pfds[i].fd << std::endl;
+                removeFromPoll(i);//rm client from pollfds
             }
             else if (pfds[i].revents & POLLHUP) {
                 removeFromPoll(i);//rm client from pollfds
