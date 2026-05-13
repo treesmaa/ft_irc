@@ -25,7 +25,7 @@ class Server {
         ~Server();
 
         void boot(void);
-        void socketSetup(void);
+        void serverSocketSetup(void);
         void addToPoll(int fd, short events);
         void printNewClient(struct sockaddr_storage client_addr) const;
 
