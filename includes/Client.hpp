@@ -6,6 +6,8 @@ class Client {
         Client();
         ~Client();
     private:
+        int fd;
+
         //not copiable!
         Client(const Client& original);
         Client& operator=(const Client& other);
