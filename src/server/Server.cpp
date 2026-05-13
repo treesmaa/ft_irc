@@ -19,10 +19,11 @@ std::string intToString(int n) {
     return oss.str();
 }
 
-void Server::addToPoll(int fd, short events) {
+void Server::addToPoll(int fd) {
         struct pollfd p;
         p.fd = fd;
-        p.events = events;
+        p.events = POLLIN;
+        p.revents = 0;
         pfds.push_back(p);
 }
 
@@ -43,7 +44,7 @@ void Server::printNewClient(struct sockaddr_storage client_addr) const {
         std::cout << "Connection from " << ipstr << std::endl;
 }
 
-void Server::socketSetup() {
+void Server::serverSocketSetup() {
     struct addrinfo hints;
     struct addrinfo *servinfo;
 
@@ -91,18 +92,29 @@ void Server::socketSetup() {
     if (listen(server_fd, SOMAXCONN) == -1)
         throw std::runtime_error(std::string("failed to listen on socket: ") + strerror(errno));
 
-    addToPoll(server_fd, POLLIN);
+    addToPoll(server_fd);
     std::cout << "IRC server listening on port " << port << std::endl;
 }
 
 void Server::boot() {
 
-    socketSetup();
+    serverSocketSetup();
 
     while (1) {
 
-        poll(&pfds[0], pfds.size(), -1);
+        if (poll(&pfds[0], pfds.size(), -1) == -1)
+            throw std::runtime_error(std::string("poll() failed: ") + strerror(errno));
 
+        for (int i = 0; i < pfds.size(); i++) {//loop through all pfds
+            if (pfds[i].revents & POLLIN) {
+                if (pfds[i].fd == server_fd) {
+
+                }
+            }
+            else {
+
+            }
+        }
         struct sockaddr_storage client_addr;
         socklen_t addr_size = sizeof(client_addr);
         int new_fd = accept(server_fd, (struct sockaddr *)&client_addr, &addr_size);//i guess we need a new fd for each connecting client
