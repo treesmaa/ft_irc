@@ -10,6 +10,10 @@ Server::Server(int port, char *password) : port(port), password(password), serve
 Server::~Server() {
     if (server_fd != -1)
         close(server_fd);
+    for (int i = 1; i < pfds.size(); i++) {
+        if (pfds[i].fd != -1)
+            close(pfds[i].fd);
+    }
     std::cout << "Server class destroyed" << std::endl;
 }
 
@@ -108,20 +112,19 @@ void Server::boot() {
         for (int i = 0; i < pfds.size(); i++) {//loop through all pfds
             if (pfds[i].revents & POLLIN) {
                 if (pfds[i].fd == server_fd) {
-
+                    struct sockaddr_storage client_addr;
+                    socklen_t addr_size = sizeof(client_addr);
+                    int new_fd = accept(server_fd, (struct sockaddr *)&client_addr, &addr_size);//i guess we need a new fd for each connecting client
+                    if (new_fd == -1)
+                        throw std::runtime_error(std::string("failed to accept connection: ") + strerror(errno));
+                    addToPoll(new_fd);
+                    printNewClient(client_addr);
                 }
             }
             else {
-
+                continue;
             }
         }
-        struct sockaddr_storage client_addr;
-        socklen_t addr_size = sizeof(client_addr);
-        int new_fd = accept(server_fd, (struct sockaddr *)&client_addr, &addr_size);//i guess we need a new fd for each connecting client
-        if (new_fd == -1)
-            throw std::runtime_error(std::string("failed to accept connection: ") + strerror(errno));
-        addToPoll(new_fd, POLLIN);
-        printNewClient(client_addr);
 
         // 1. accept new clients (non-blocking socket helps)
         // 2. read from existing clients
