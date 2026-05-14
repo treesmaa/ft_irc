@@ -37,7 +37,7 @@ class Server {
         std::string                 password;
         int                         server_fd;
         std::vector<struct pollfd>  pfds;
-
+        std::vector<Client>         clients;
         //not copiable
         Server(const Server& original);
         Server& operator=(const Server& other);

@@ -3,11 +3,14 @@
 
 class Client {
     public:
-        Client();
+        Client(int fd);
         ~Client();
+
+        int getFd() const;
     private:
         int fd;
 
+        Client();
         //not copiable!
         Client(const Client& original);
         Client& operator=(const Client& other);

@@ -32,7 +32,13 @@ void Server::addToPoll(int fd) {
 }
 
 void Server::removeClient(int idx) {
-    close(pfds[idx].fd);
+    int client_fd = pfds[idx].fd;
+    for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
+        if (client_fd == it->getFd()) {
+            clients.erase(it);
+        }
+    }
+    close(client_fd);
     pfds.erase(pfds.begin() + idx);
 }
 
@@ -119,6 +125,7 @@ void Server::acceptNewClient() {
         return;
     }
     addToPoll(new_fd);
+    clients.push_back(Client(new_fd));
     printNewClient(client_addr);
 }
 
