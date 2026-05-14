@@ -1,6 +1,8 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
+#include <string>
+
 class Client {
     public:
         Client(int fd);
@@ -10,7 +12,9 @@ class Client {
 
         int getFd() const;
     private:
-        int fd;
+        int         fd;
+        std::string username;
+        std::string nickname;
 
         Client();
 
