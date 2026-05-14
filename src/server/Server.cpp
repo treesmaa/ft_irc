@@ -133,10 +133,10 @@ void Server::readClientData(int idx) {
         //for now, just print the message?
         //std::cout << buf << std::endl;
         //send to all
-        std::cout << "New message from " << pfds[idx].fd;
+        //some tag with who sent it, username?
         for (size_t i = 0; i < pfds.size(); i++) {
             int dest_fd = pfds[i].fd;
-            if (dest_fd != pfds[idx].fd) {
+            if (dest_fd != pfds[idx].fd && dest_fd != server_fd) {
                 if (send(dest_fd, buf, nbytes, 0) == -1)
                     std::cerr << "Error: send(): " << strerror(errno) << std::endl;
             }
@@ -155,13 +155,13 @@ void Server::boot() {
             throw std::runtime_error(std::string("poll() failed: ") + strerror(errno));
 
         for (size_t i = 0; i < pfds.size(); i++) {//loop through all pfds
-/*             if (pfds[i].revents & POLLERR) {
+            if (pfds[i].revents & POLLERR) {
                 std::cerr << "POLLERR on fd " << pfds[i].fd << std::endl;
                 removeClient(i);//rm client from pollfds
             }
             else if (pfds[i].revents & POLLHUP) {
                 removeClient(i);//rm client from pollfds
-            } */
+            }
             if (pfds[i].revents & POLLIN) {//accept new clients.
                 if (pfds[i].fd == server_fd) {
                     acceptNewClient();
