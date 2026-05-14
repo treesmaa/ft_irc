@@ -109,24 +109,42 @@ void Server::acceptNewClient() {
     struct sockaddr_storage client_addr;
     socklen_t addr_size = sizeof(client_addr);
     int new_fd = accept(server_fd, (struct sockaddr *)&client_addr, &addr_size);
-    if (new_fd == -1)
+    if (new_fd == -1) {
         std::cerr << "Error: failed to accept client" << std::endl;
-    else {
-        addToPoll(new_fd);
-        printNewClient(client_addr);
+        return;
     }
+    if (fcntl(server_fd, F_SETFL, O_NONBLOCK) == -1) {
+        std::cerr << "Error: fcntl(): " << strerror(errno) << std::endl;
+        close(new_fd);
+        return;
+    }
+    addToPoll(new_fd);
+    printNewClient(client_addr);
 }
 
-void Server::readClientData(int idx) {
+int Server::readClientData(int idx) {
     char buf[257];
 
     int nbytes = recv(pfds[idx].fd, buf, 256, 0);
 
-    if (nbytes < 0)
+    if (nbytes < 0) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            // nothing to read right now
+            // NOT an error on nonblocking sockets
+            return 0;
+        }
+        else if (errno == EINTR) {
+            // interrupted by signal
+            // usually retry later
+            return 0;
+        }
+        // real socket error
         std::cerr << "Error: recv(): " << strerror(errno) << std::endl;
+        return -1;
+    }
     else if (nbytes == 0) {
         std::cout << "Client fd " << pfds[idx].fd << " hung up" << std::endl;
-        removeClient(idx);
+        return -1;
     }
     else {
         //buf[nbytes] = '\0';
@@ -142,7 +160,7 @@ void Server::readClientData(int idx) {
             }
         }
     }
-        
+    return 0;
 }
 
 void Server::boot() {
@@ -154,26 +172,29 @@ void Server::boot() {
         if (poll(&pfds[0], pfds.size(), -1) == -1)
             throw std::runtime_error(std::string("poll() failed: ") + strerror(errno));
 
-        for (size_t i = 0; i < pfds.size(); i++) {//loop through all pfds
+        size_t i = 0;
+        while (i < pfds.size()) {
             if (pfds[i].revents & POLLERR) {
                 std::cerr << "POLLERR on fd " << pfds[i].fd << std::endl;
-                removeClient(i);//rm client from pollfds
+                removeClient(i);
+                continue;
             }
             else if (pfds[i].revents & POLLHUP) {
-                removeClient(i);//rm client from pollfds
+                removeClient(i);
+                continue;
             }
-            if (pfds[i].revents & POLLIN) {//accept new clients.
+            if (pfds[i].revents & POLLIN) {
                 if (pfds[i].fd == server_fd) {
                     acceptNewClient();
                 }
                 else {
-                    readClientData(i);
+                    if (readClientData(i) == -1) {
+                        removeClient(i);
+                        continue;
+                    }
                 }
             }
+            i++;
         }
-
-        // 1. accept new clients (non-blocking socket helps)
-        // 2. read from existing clients
-        // 3. handle disconnects
     }
 }

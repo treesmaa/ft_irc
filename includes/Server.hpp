@@ -30,7 +30,7 @@ class Server {
         void removeClient(int idx);
         void printNewClient(struct sockaddr_storage client_addr) const;
         void acceptNewClient();
-        void readClientData(int idx);
+        int readClientData(int idx);
 
     private:
         int                         port;
