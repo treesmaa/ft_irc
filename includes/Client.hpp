@@ -4,6 +4,8 @@
 class Client {
     public:
         Client(int fd);
+        Client(const Client& original);
+        Client& operator=(const Client& other);
         ~Client();
 
         int getFd() const;
@@ -11,9 +13,7 @@ class Client {
         int fd;
 
         Client();
-        //not copiable!
-        Client(const Client& original);
-        Client& operator=(const Client& other);
+
 };
 
 #endif
