@@ -27,8 +27,10 @@ class Server {
         void boot(void);
         void serverSocketSetup(void);
         void addToPoll(int fd);
-        void removeFromPoll(int idx);
+        void removeClient(int idx);
         void printNewClient(struct sockaddr_storage client_addr) const;
+        void acceptNewClient();
+        void readClientData(int idx);
 
     private:
         int                         port;

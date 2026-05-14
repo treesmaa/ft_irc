@@ -31,7 +31,7 @@ void Server::addToPoll(int fd) {
     pfds.push_back(p);
 }
 
-void Server::removeFromPoll(int idx) {
+void Server::removeClient(int idx) {
     close(pfds[idx].fd);
     pfds.erase(pfds.begin() + idx);
 }
@@ -48,9 +48,9 @@ void Server::printNewClient(struct sockaddr_storage client_addr) const {
             printable_addr = inet_ntop(client_addr.ss_family, &s->sin6_addr, ipstr, sizeof(ipstr));
         }
         if (!printable_addr)
-            throw std::runtime_error(std::string("inet_ntop() failed") + strerror(errno));
-
-        std::cout << "Connection from " << ipstr << std::endl;
+            std::cerr << "Error: inet_ntop() failed: " << strerror(errno) << std::endl;
+        else
+            std::cout << "New connection from " << ipstr << std::endl;//can only be printed if success
 }
 
 void Server::serverSocketSetup() {
@@ -82,10 +82,10 @@ void Server::serverSocketSetup() {
             throw std::runtime_error(std::string("failed to set socket options: ") + strerror(errno));
         }
         //set socket fd in non-blocking mode
-/*         if (fcntl(_sockfd, F_SETFL, O_NONBLOCK) == -1) {
+        if (fcntl(server_fd, F_SETFL, O_NONBLOCK) == -1) {
             freeaddrinfo(servinfo);
             throw std::runtime_error(std::string("failed to set socket to non-blocking: ") + strerror(errno));
-        } */
+        }
         if (bind(server_fd, p->ai_addr, p->ai_addrlen) == 0)
             break;
         
@@ -105,6 +105,46 @@ void Server::serverSocketSetup() {
     std::cout << "IRC server listening on port " << port << std::endl;
 }
 
+void Server::acceptNewClient() {
+    struct sockaddr_storage client_addr;
+    socklen_t addr_size = sizeof(client_addr);
+    int new_fd = accept(server_fd, (struct sockaddr *)&client_addr, &addr_size);
+    if (new_fd == -1)
+        std::cerr << "Error: failed to accept client" << std::endl;
+    else {
+        addToPoll(new_fd);
+        printNewClient(client_addr);
+    }
+}
+
+void Server::readClientData(int idx) {
+    char buf[257];
+
+    int nbytes = recv(pfds[idx].fd, buf, 256, 0);
+
+    if (nbytes < 0)
+        std::cerr << "Error: recv(): " << strerror(errno) << std::endl;
+    else if (nbytes == 0) {
+        std::cout << "Client fd " << pfds[idx].fd << " hung up" << std::endl;
+        removeClient(idx);
+    }
+    else {
+        //buf[nbytes] = '\0';
+        //for now, just print the message?
+        //std::cout << buf << std::endl;
+        //send to all
+        std::cout << "New message from " << pfds[idx].fd;
+        for (size_t i = 0; i < pfds.size(); i++) {
+            int dest_fd = pfds[i].fd;
+            if (dest_fd != pfds[idx].fd) {
+                if (send(dest_fd, buf, nbytes, 0) == -1)
+                    std::cerr << "Error: send(): " << strerror(errno) << std::endl;
+            }
+        }
+    }
+        
+}
+
 void Server::boot() {
 
     serverSocketSetup();
@@ -115,26 +155,20 @@ void Server::boot() {
             throw std::runtime_error(std::string("poll() failed: ") + strerror(errno));
 
         for (size_t i = 0; i < pfds.size(); i++) {//loop through all pfds
-            if (pfds[i].revents & POLLERR) {
+/*             if (pfds[i].revents & POLLERR) {
                 std::cerr << "POLLERR on fd " << pfds[i].fd << std::endl;
-                removeFromPoll(i);//rm client from pollfds
+                removeClient(i);//rm client from pollfds
             }
             else if (pfds[i].revents & POLLHUP) {
-                removeFromPoll(i);//rm client from pollfds
-            }
+                removeClient(i);//rm client from pollfds
+            } */
             if (pfds[i].revents & POLLIN) {//accept new clients.
                 if (pfds[i].fd == server_fd) {
-                    struct sockaddr_storage client_addr;
-                    socklen_t addr_size = sizeof(client_addr);
-                    int new_fd = accept(server_fd, (struct sockaddr *)&client_addr, &addr_size);//i guess we need a new fd for each connecting client
-                    if (new_fd == -1)
-                        throw std::runtime_error(std::string("failed to accept connection: ") + strerror(errno));
-                    addToPoll(new_fd);
-                    printNewClient(client_addr);
+                    acceptNewClient();
                 }
-            }
-            else {
-                continue;//handle existing clients data.
+                else {
+                    readClientData(i);
+                }
             }
         }
 
