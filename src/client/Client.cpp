@@ -1,7 +1,7 @@
 #include "Client.hpp"
 
 Client::Client() {}
-Client::Client(int fd) : fd(fd) {}
+Client::Client(int fd) : fd(fd), username("default_user"), nickname("default_nickname") {}
 Client::Client(const Client& original) : fd(original.fd), username(original.username), nickname(original.nickname) {}
 Client& Client::operator=(const Client& other) {
     if (this != &other) {
