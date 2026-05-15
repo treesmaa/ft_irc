@@ -8,5 +8,6 @@ IRC server in C++98
 ## Instructions
 
 ## Resources
-- Internet Relay Chat: Server Protocol: https://datatracker.ietf.org/doc/html/rfc2813
-- Beej's Guide to Network Programming: https://beej.us/guide/bgnet/
+- [Internet Relay Chat Protocol (RFC 1459)](https://datatracker.ietf.org/doc/html/rfc1459)
+- [Internet Relay Chat: Client Protocol (RFC 2812)](https://datatracker.ietf.org/doc/html/rfc2812)
+- [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/)
