@@ -6,6 +6,7 @@
 
 class Client {
     public:
+        Client();
         Client(int fd);
         Client(const Client& original);
         Client& operator=(const Client& other);
@@ -16,7 +17,6 @@ class Client {
         int         fd;
         std::string username;
         std::string nickname;
-        bool        is_operator;
         /*Nickname: max 9 chars, must be unique
         See the protocol grammar rules
         for what may and may not be used
@@ -24,8 +24,6 @@ class Client {
    following information about all clients: the real name of the host
    that the client is running on, the username of the client on that
    host, and the server to which the client is connected.*/
-
-        Client();
 
 };
 
