@@ -10,7 +10,6 @@ SRC_MAIN 	:= src/main.cpp
 SRC_SERVER	:= src/server/Server.cpp \
 
 SRC_CLIENT	:= src/client/Client.cpp \
-	src/client/Operator.cpp \
 
 SRC_CHANNEL := src/channel/Channel.cpp \
 
