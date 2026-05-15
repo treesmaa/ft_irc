@@ -130,9 +130,9 @@ void Server::acceptNewClient() {
 }
 
 int Server::readClientData(int idx) {
-    char buf[257];
+    char buf[MAX_LENGTH];
 
-    int nbytes = recv(pfds[idx].fd, buf, 256, 0);
+    int nbytes = recv(pfds[idx].fd, buf, sizeof(buf), 0);
 
     if (nbytes < 0) {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {

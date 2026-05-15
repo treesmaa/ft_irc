@@ -19,6 +19,8 @@
 
 #include "Client.hpp"
 
+#define MAX_LENGTH 512
+
 class Server {
     public:
         Server(int port, char *password);
