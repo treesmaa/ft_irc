@@ -139,13 +139,11 @@ int Server::readClientData(int idx) {
 
     if (nbytes < 0) {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            // nothing to read right now
-            // NOT an error on nonblocking sockets
+            // nothing to read right now, not an error on nonblocking sockets
             return 0;
         }
         else if (errno == EINTR) {
-            // interrupted by signal
-            // usually retry later
+            // interrupted by signal, usually retry later
             return 0;
         }
         // real socket error
@@ -173,14 +171,18 @@ int Server::readClientData(int idx) {
     return 0;
 }
 
+
 void Server::boot() {
 
     serverSocketSetup();
 
-    while (1) {
+    while (!g_stop) {
 
-        if (poll(&pfds[0], pfds.size(), -1) == -1)
+        if (poll(&pfds[0], pfds.size(), -1) == -1) {
+            if (errno == EINTR)
+                continue;
             throw std::runtime_error(std::string("poll() failed: ") + strerror(errno));
+        }
 
         size_t i = 0;
         while (i < pfds.size()) {

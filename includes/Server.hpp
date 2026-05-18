@@ -17,8 +17,10 @@
 #include <arpa/inet.h>
 #include <vector>
 #include <algorithm>
+#include <csignal>
 
 #include "Client.hpp"
+#include "Signal.hpp"
 
 #define MAX_LENGTH 512
 
