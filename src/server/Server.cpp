@@ -31,11 +31,14 @@ void Server::addToPoll(int fd) {
     pfds.push_back(p);
 }
 
+
 void Server::removeClient(int idx) {
     int client_fd = pfds[idx].fd;
+
     for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
         if (client_fd == it->getFd()) {
             clients.erase(it);
+            break;
         }
     }
     close(client_fd);

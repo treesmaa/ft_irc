@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <arpa/inet.h>
 #include <vector>
+#include <algorithm>
 
 #include "Client.hpp"
 
