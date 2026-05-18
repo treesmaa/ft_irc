@@ -17,7 +17,7 @@
 #include <arpa/inet.h>
 #include <vector>
 #include <algorithm>
-#include <csignal>
+#include <map>
 
 #include "Client.hpp"
 #include "Signal.hpp"
@@ -36,13 +36,14 @@ class Server {
         void printNewClient(struct sockaddr_storage client_addr) const;
         void acceptNewClient();
         int readClientData(int idx);
+        int handleRegistration(int client_fd);
 
     private:
         int                         port;
         std::string                 password;
         int                         server_fd;
         std::vector<struct pollfd>  pfds;
-        std::vector<Client>         clients;
+        std::map<int, Client>       clients;//store as a map with the pfds fd ...
         //not copiable
         Server(const Server& original);
         Server& operator=(const Server& other);

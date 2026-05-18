@@ -3,7 +3,6 @@
 Server::Server() {}
 
 Server::Server(int port, char *password) : port(port), password(password), server_fd(-1) {
-    std::cout << "Server class created. Port: " << port << ", Password: " << password << std::endl;
     //add checks for password?
 }
 
@@ -14,7 +13,6 @@ Server::~Server() {
         if (it->fd != -1)
             close(it->fd);
     }
-    std::cout << "Server class destroyed" << std::endl;
 }
 
 std::string intToString(int n) {
@@ -34,13 +32,7 @@ void Server::addToPoll(int fd) {
 
 void Server::removeClient(int idx) {
     int client_fd = pfds[idx].fd;
-
-    for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
-        if (client_fd == it->getFd()) {
-            clients.erase(it);
-            break;
-        }
-    }
+    clients.erase(client_fd);
     close(client_fd);
     pfds.erase(pfds.begin() + idx);
 }
@@ -122,14 +114,19 @@ void Server::acceptNewClient() {
         std::cerr << "Error: failed to accept client" << std::endl;
         return;
     }
-    if (fcntl(server_fd, F_SETFL, O_NONBLOCK) == -1) {
+    if (fcntl(new_fd, F_SETFL, O_NONBLOCK) == -1) {
         std::cerr << "Error: fcntl(): " << strerror(errno) << std::endl;
         close(new_fd);
         return;
     }
     addToPoll(new_fd);
-    clients.push_back(Client(new_fd));
+    clients[new_fd] = Client(new_fd);
     printNewClient(client_addr);
+}
+
+int Server::handleRegistration(int client_fd) {
+    (void)client_fd;
+    return 0;
 }
 
 int Server::readClientData(int idx) {
@@ -138,15 +135,10 @@ int Server::readClientData(int idx) {
     int nbytes = recv(pfds[idx].fd, buf, sizeof(buf), 0);
 
     if (nbytes < 0) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            // nothing to read right now, not an error on nonblocking sockets
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
             return 0;
-        }
-        else if (errno == EINTR) {
-            // interrupted by signal, usually retry later
+        else if (errno == EINTR)
             return 0;
-        }
-        // real socket error
         std::cerr << "Error: recv(): " << strerror(errno) << std::endl;
         return -1;
     }
@@ -154,20 +146,25 @@ int Server::readClientData(int idx) {
         std::cout << "Client fd " << pfds[idx].fd << " hung up" << std::endl;
         return -1;
     }
-    else {
-        //buf[nbytes] = '\0';
-        //for now, just print the message?
-        //std::cout << buf << std::endl;
-        //send to all
-        //some tag with who sent it, username?
-        for (size_t i = 0; i < pfds.size(); i++) {
-            int dest_fd = pfds[i].fd;
-            if (dest_fd != pfds[idx].fd && dest_fd != server_fd) {
-                if (send(dest_fd, buf, nbytes, 0) == -1)
-                    std::cerr << "Error: send(): " << strerror(errno) << std::endl;
-            }
+
+    int client_fd = pfds[idx].fd;
+    if (!clients[client_fd].getRegistrationStatus()) {
+        //parse only registration commands
+        //handleRegistration(client_fd)
+        char msg[40] = ":server 451 * :You have not registered\n";
+        if (send(pfds[idx].fd, msg, sizeof(msg), 0) == -1)
+            std::cerr << "Error: send(): " << strerror(errno) << std::endl;
+        return 0;
+    }
+    //broadcasting to all clients.
+    for (size_t i = 0; i < pfds.size(); i++) {
+        int dest_fd = pfds[i].fd;
+        if (dest_fd != pfds[idx].fd && dest_fd != server_fd) {
+            if (send(dest_fd, buf, nbytes, 0) == -1)
+                std::cerr << "Error: send(): " << strerror(errno) << std::endl;
         }
     }
+
     return 0;
 }
 

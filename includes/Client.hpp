@@ -13,10 +13,17 @@ class Client {
         ~Client();
 
         int getFd() const;
+        bool getRegistrationStatus() const;
+
+        void setUsername(const std::string& name);
+        void setNickname(const std::string& name);
+        void registerClient();
+
     private:
         int         fd;
         std::string username;
         std::string nickname;
+        bool        registered;
         /*Nickname: max 9 chars, must be unique
         See the protocol grammar rules
         for what may and may not be used
