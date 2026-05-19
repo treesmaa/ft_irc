@@ -21,8 +21,8 @@
 
 #include "Client.hpp"
 #include "Signal.hpp"
-
-#define MAX_LENGTH 512
+#include "CommandParser.hpp"
+#include "CommandHandler.hpp"
 
 class Server {
     public:
@@ -43,7 +43,7 @@ class Server {
         std::string                 password;
         int                         server_fd;
         std::vector<struct pollfd>  pfds;
-        std::map<int, Client>       clients;//store as a map with the pfds fd ...
+        std::map<int, Client>       clients;
         //not copiable
         Server(const Server& original);
         Server& operator=(const Server& other);

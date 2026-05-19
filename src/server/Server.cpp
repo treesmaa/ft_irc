@@ -131,8 +131,9 @@ int Server::handleRegistration(int client_fd) {
 
 int Server::readClientData(int idx) {
     char buf[MAX_LENGTH];
+    int client_fd = pfds[idx].fd;
 
-    int nbytes = recv(pfds[idx].fd, buf, sizeof(buf), 0);
+    int nbytes = recv(client_fd, buf, sizeof(buf), 0);
 
     if (nbytes < 0) {
         if (errno == EAGAIN || errno == EWOULDBLOCK)
@@ -143,15 +144,20 @@ int Server::readClientData(int idx) {
         return -1;
     }
     else if (nbytes == 0) {
-        std::cout << "Client fd " << pfds[idx].fd << " hung up" << std::endl;
+        std::cout << "Client fd " << client_fd << " hung up" << std::endl;
         return -1;
     }
 
-    int client_fd = pfds[idx].fd;
-    if (!clients[client_fd].getRegistrationStatus()) {
+    s_msg message;
+    if (parser(buf, message) == -1)
+        return 0;// i don't wanna remove client, but return early
+
+    //commandhandler...
+    
+/*     if (!clients[client_fd].getRegistrationStatus()) {
         //parse only registration commands
         //handleRegistration(client_fd)
-        char msg[40] = ":server 451 * :You have not registered\n";
+        char msg[41] = ":server 451 * :You have not registered\r\n";
         if (send(pfds[idx].fd, msg, sizeof(msg), 0) == -1)
             std::cerr << "Error: send(): " << strerror(errno) << std::endl;
         return 0;
@@ -163,7 +169,7 @@ int Server::readClientData(int idx) {
             if (send(dest_fd, buf, nbytes, 0) == -1)
                 std::cerr << "Error: send(): " << strerror(errno) << std::endl;
         }
-    }
+    } */
 
     return 0;
 }
