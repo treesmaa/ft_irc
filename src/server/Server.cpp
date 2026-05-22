@@ -15,6 +15,10 @@ Server::~Server() {
     }
 }
 
+std::string Server::getPassword() const {
+    return password;
+}
+
 std::string intToString(int n) {
     std::ostringstream oss;
     oss << n;
@@ -121,12 +125,38 @@ void Server::acceptNewClient() {
     }
     addToPoll(new_fd);
     clients[new_fd] = Client(new_fd);
+    clients[new_fd].setServer(this);
     printNewClient(client_addr);
 }
 
 int Server::handleRegistration(int client_fd) {
     (void)client_fd;
     return 0;
+}
+
+void Server::handleMessage(std::string& line, Client& client) {
+    s_msg message;
+    if (parser(line, message) == -1) {
+        std::cerr << "Parsing error: " << line << std::endl;
+        return;
+    }
+/*     std::cout << "Prefix: " << message.prefix << std::endl;
+    std::cout << "Command: " << message.command << std::endl;
+    std::cout << "Parameters: " << std::endl;
+    for (size_t i = 0; i < message.parameters.size(); i++) {
+        std::cout << i << ": " << message.parameters[i] << std::endl;
+    } */
+    CommandHandler cmd_handler(*this);
+    cmd_handler.handleCommand(&message, client);
+    /*
+    //broadcasting to all clients.
+    for (size_t i = 0; i < pfds.size(); i++) {
+        int dest_fd = pfds[i].fd;
+        if (dest_fd != pfds[idx].fd && dest_fd != server_fd) {
+            if (send(dest_fd, buf, nbytes, 0) == -1)
+                std::cerr << "Error: send(): " << strerror(errno) << std::endl;
+        }
+    } */
 }
 
 int Server::readClientData(int idx) {
@@ -148,28 +178,14 @@ int Server::readClientData(int idx) {
         return -1;
     }
 
-    s_msg message;
-    if (parser(buf, message) == -1)
-        return 0;// i don't wanna remove client, but return early
-
-    //commandhandler...
-    
-/*     if (!clients[client_fd].getRegistrationStatus()) {
-        //parse only registration commands
-        //handleRegistration(client_fd)
-        char msg[41] = ":server 451 * :You have not registered\r\n";
-        if (send(pfds[idx].fd, msg, sizeof(msg), 0) == -1)
-            std::cerr << "Error: send(): " << strerror(errno) << std::endl;
-        return 0;
+    //appending message to client buffer: must check that it does not violate the 512 char max!
+    clients[client_fd].getBuffer().append(buf, nbytes);
+    size_t pos = 0;
+    while ((pos = clients[client_fd].getBuffer().find("\r\n")) != std::string::npos) {
+        std::string line = clients[client_fd].getBuffer().substr(0, pos + 2);
+        handleMessage(line, clients[client_fd]);
+        clients[client_fd].getBuffer().erase(0, pos + 2);
     }
-    //broadcasting to all clients.
-    for (size_t i = 0; i < pfds.size(); i++) {
-        int dest_fd = pfds[i].fd;
-        if (dest_fd != pfds[idx].fd && dest_fd != server_fd) {
-            if (send(dest_fd, buf, nbytes, 0) == -1)
-                std::cerr << "Error: send(): " << strerror(errno) << std::endl;
-        }
-    } */
 
     return 0;
 }

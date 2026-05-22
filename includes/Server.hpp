@@ -24,10 +24,14 @@
 #include "CommandParser.hpp"
 #include "CommandHandler.hpp"
 
+#define MAX_LENGTH 512
+
 class Server {
     public:
         Server(int port, char *password);
         ~Server();
+
+        std::string getPassword() const;
 
         void boot(void);
         void serverSocketSetup(void);
@@ -37,6 +41,7 @@ class Server {
         void acceptNewClient();
         int readClientData(int idx);
         int handleRegistration(int client_fd);
+        void handleMessage(std::string& line, Client& client);
 
     private:
         int                         port;
