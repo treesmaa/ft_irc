@@ -5,6 +5,11 @@
 #include "CommandParser.hpp"
 #include "Client.hpp"
 
+#include <sstream>
+
+#define CRLF "\r\n"
+#define SERVER "lilserv"
+
 enum Numerics {
     // General errors
     ERR_NOSUCHNICK        = 401,
@@ -40,14 +45,25 @@ enum Numerics {
     ERR_CHANOPRIVSNEEDED  = 482
 };
 
+enum RPL {
+    RPL_WELCOME  = 1,
+    RPL_YOURHOST = 2,
+    RPL_CREATED  = 3,
+    RPL_MYINFO   = 4
+}
+
 class CommandHandler {
     public:
         CommandHandler(Server& server);
 
-        void    handleCommand(s_msg *message, Client& client);
-        void    handlePass(s_msg *message, Client& client);
-
-        void    respond(int code, Client& client);
+        void            handleCommand(s_msg *message, Client& client);
+        void            handlePass(s_msg *message, Client& client);
+        void            handleNick(s_msg *message, Client& client);
+        void            handleUser(s_msg *message, Client& client);
+        void            respond(std::string reply, Client& client);
+        std::string     formReply(int code, s_msg *message, Client& client);
+        void            tryToRegister(Client& client);
+        void            welcome(Client& client);
     private:
         Server&                     server;
         std::map<int, std::string>  replies;

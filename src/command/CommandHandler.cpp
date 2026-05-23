@@ -4,16 +4,15 @@ std::map<int, std::string> initReplies() {
     std::map<int, std::string> r;
 
     // Connection / Registration
-    r[ERR_NOTREGISTERED]      = ":You have not registered";                  // 451
-    r[ERR_NEEDMOREPARAMS]     = "%s :Not enough parameters";                 // 461
-    r[ERR_ALREADYREGISTRED]   = ":You may not reregister";                   // 462
-    r[ERR_PASSWDMISMATCH]     = ":Password incorrect";                       // 464
+    r[ERR_NOTREGISTERED]      = " :You have not registered";                  // 451
+    r[ERR_NEEDMOREPARAMS]     = " :Not enough parameters";                 // 461
+    r[ERR_ALREADYREGISTRED]   = " :You may not reregister";                   // 462
+    r[ERR_PASSWDMISMATCH]     = " :Password incorrect";                       // 464
 
     // Nickname
-    r[ERR_NONICKNAMEGIVEN]    = ":No nickname given";                        // 431
-    r[ERR_ERRONEUSNICKNAME]   = "%s :Erroneous nickname";                    // 432
+    r[ERR_NONICKNAMEGIVEN]    = " :No nickname given";                        // 431
+    r[ERR_ERRONEUSNICKNAME]   = " :Erroneous nickname";                    // 432
     r[ERR_NICKNAMEINUSE]      = "%s :Nickname is already in use";            // 433
-    r[ERR_NICKCOLLISION]      = "%s :Nickname collision KILL";               // 436
 
     // Channel / JOIN
     r[ERR_NOSUCHCHANNEL]      = "%s :No such channel";                       // 403
@@ -30,8 +29,8 @@ std::map<int, std::string> initReplies() {
     r[ERR_CHANOPRIVSNEEDED]   = "%s :You're not channel operator";           // 482
 
     // Messaging
-    r[ERR_NORECIPIENT]        = ":No recipient given (%s)";                  // 411
-    r[ERR_NOTEXTTOSEND]       = ":No text to send";                          // 412
+    r[ERR_NORECIPIENT]        = " :No recipient given (%s)";                  // 411
+    r[ERR_NOTEXTTOSEND]       = " :No text to send";                          // 412
     r[ERR_CANNOTSENDTOCHAN]   = "%s :Cannot send to channel";                // 404
     r[ERR_NOSUCHNICK]         = "%s :No such nick/channel";                  // 401
 
@@ -49,41 +48,108 @@ CommandHandler::CommandHandler(Server& server) : server(server) {
     replies = initReplies();
 }
 
-char *CommandHandler::formReply(int code, Client& client) {
-    //continue
+std::string CommandHandler::formReply(int code, s_msg *message, Client& client) {
+    std::ostringstream oss;
+    if (code == ERR_NEEDMOREPARAMS)//replies where the response is preceded by the 
+        oss << ":" << SERVER << " " << code << " " << client.getNickname() << " " << message->command << replies[code] << CRLF;
+    else if (code == ERR_ERRONEUSNICKNAME || code == ERR_NICKNAMEINUSE)
+        oss << ":" << SERVER << " " << code << " " << client.getNickname() << " " << message->parameters[0] << replies[code] << CRLF;
+    else
+        oss << ":" << SERVER << " " << code << " " << client.getNickname() << replies[code] << CRLF;
+    return oss.str();
 }
 
-void CommandHandler::respond(int code, Client& client) {
-    char *reply = formReply(code, client);
-    if (send(client.getFd(), replies[code].c_str(), replies[code].size(), 0) == -1)
+void CommandHandler::respond(std::string reply, Client& client) {
+    if (send(client.getFd(), reply.c_str(), reply.size(), 0) == -1)
         std::cerr << "Send error" << std::endl;
 }
 
-void CommandHandler::handlePass(s_msg *message, Client& client) {
-    if (message->parameters.size() == 0) {
-        respond(ERR_NEEDMOREPARAMS, client);
-        return;
-    }
-    if (message->parameters[0] == client.getServer()->getPassword())
-        client.authenticate();
-    else
-        respond(ERR_PASSWDMISMATCH, client);
+void CommandHandler::welcome(Client& client) {
+    std::string nick = client.getNickname();
+    std::string hostmask = nick + "!" + client.getUsername() + "@" + client.getHost();
+
+    send(client.getFd(), RPL_WELCOME, )
+    //CONTINUE HERE
 }
 
-/* int handleNick(s_msg *message, Client& client) {
-    if (!client.isAuthenticated() == true) {
-        
+void CommandHandler::tryToRegister(Client& client) {
+    if (client.getNickname() == "*" || client.getUsername().empty())
+        return;
+    std::string server_pw = client.getServer()->getPassword();
+    if (!server_pw.empty()) {
+        if (client.getPassword() != server_pw) {
+            respond(formReply(ERR_PASSWDMISMATCH, NULL, client), client);
+            return;
+        }
+        client.registerClient();
+        welcome(client);
     }
 }
- */
+
+void CommandHandler::handlePass(s_msg *message, Client& client) {
+    if (client.isRegistered()) {
+        respond(formReply(ERR_ALREADYREGISTRED, message, client), client);
+        return;
+    }
+    if (message->parameters.size() == 0) {
+        respond(formReply(ERR_NEEDMOREPARAMS, message, client), client);
+        return;
+    }
+    client.setPassword(message->parameters[0]);
+    tryToRegister(client);
+}
+
+bool isValidNickname(std::string& nick) {
+    if (nick.empty() || nick.length() > 9)
+        return false;//add checks on nickname
+    return true;
+}
+
+bool nickInUse(std::string& nick, std::map<int, Client> clients) {
+    for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
+        if (it->second.isRegistered() && it->second.getNickname() == nick) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void CommandHandler::handleNick(s_msg *message, Client& client) {
+    if (message->parameters.size() == 0) {
+        respond(formReply(ERR_NONICKNAMEGIVEN, message, client), client);
+        return;
+    }
+    if (!isValidNickname(message->parameters[0])){
+        respond(formReply(ERR_ERRONEUSNICKNAME, message, client), client);
+        return;
+    }
+    if (nickInUse(message->parameters[0], client.getServer()->getClients())) {
+        respond(formReply(ERR_NICKNAMEINUSE, message, client), client);
+        return;
+    }
+    client.setNickname(message->parameters[0]);
+    tryToRegister(client);
+}
+
+void CommandHandler::handleUser(s_msg *message, Client& client) {
+    if (client.isRegistered()) {
+        respond(formReply(ERR_ALREADYREGISTRED, message, client), client);
+        return;
+    }
+    else if (message->parameters.size() < 4) {
+        respond(formReply(ERR_NEEDMOREPARAMS, message, client), client);
+        return;
+    }
+    client.setUsername(message->parameters[0]);//What to do about real name?
+    tryToRegister(client);
+}
 
 void CommandHandler::handleCommand(s_msg *message, Client& client) {
     if (message->command == "PASS")
         handlePass(message, client);
-/*     else if (message->command == "NICK")
-        handleNick(message, client); */
-    //else if (message->command == "USER")
-
-
+    else if (message->command == "NICK")
+        handleNick(message, client);
+    else if (message->command == "USER")
+        handleUser(message, client);
 }
 

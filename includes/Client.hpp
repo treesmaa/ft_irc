@@ -15,23 +15,28 @@ class Client {
         ~Client();
 
         int getFd() const;
+        std::string getNickname() const;
+        std::string getUsername() const;
+        std::string getPassword() const;
+        std::string getHost() const;
         bool isRegistered() const;
-        bool isAuthenticated() const;
         std::string& getBuffer();
         Server* getServer() const;
 
         void setServer(Server *serv);
         void setUsername(const std::string& name);
         void setNickname(const std::string& name);
-        void authenticate();
+        void setPassword(const std::string& pass);
+        void setHost(const std::string& host);
         void registerClient();
 
     private:
         int         fd;
         std::string username;
         std::string nickname;
+        std::string password;
+        std::string hostname;
         bool        registered;
-        bool        auth;
         std::string buf;
         Server      *server;
         /*Nickname: max 9 chars, must be unique

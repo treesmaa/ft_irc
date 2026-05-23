@@ -19,6 +19,10 @@ std::string Server::getPassword() const {
     return password;
 }
 
+std::map<int, Client> Server::getClients() const {
+    return clients;
+}
+
 std::string intToString(int n) {
     std::ostringstream oss;
     oss << n;
@@ -41,7 +45,7 @@ void Server::removeClient(int idx) {
     pfds.erase(pfds.begin() + idx);
 }
 
-void Server::printNewClient(struct sockaddr_storage client_addr) const {
+/* void Server::printNewClient(struct sockaddr_storage client_addr) const {
         char ipstr[INET6_ADDRSTRLEN];
         const char *printable_addr;
         if (client_addr.ss_family == AF_INET) {
@@ -56,7 +60,7 @@ void Server::printNewClient(struct sockaddr_storage client_addr) const {
             std::cerr << "Error: inet_ntop() failed: " << strerror(errno) << std::endl;
         else
             std::cout << "New connection from " << ipstr << std::endl;//can only be printed if success
-}
+} */
 
 void Server::serverSocketSetup() {
     struct addrinfo hints;
@@ -126,13 +130,24 @@ void Server::acceptNewClient() {
     addToPoll(new_fd);
     clients[new_fd] = Client(new_fd);
     clients[new_fd].setServer(this);
-    printNewClient(client_addr);
+    char ipstr[INET6_ADDRSTRLEN];
+    const char *printable_addr;
+    if (client_addr.ss_family == AF_INET) {
+        struct sockaddr_in *s = (struct sockaddr_in *)&client_addr;
+        printable_addr = inet_ntop(client_addr.ss_family, &s->sin_addr, ipstr, sizeof(ipstr));
+    }
+    else {
+        struct sockaddr_in6 *s = (struct sockaddr_in6 *)&client_addr;
+        printable_addr = inet_ntop(client_addr.ss_family, &s->sin6_addr, ipstr, sizeof(ipstr));
+    }
+    if (!printable_addr)
+        std::cerr << "Error: inet_ntop() failed: " << strerror(errno) << std::endl;
+    else
+        std::cout << "New connection from " << ipstr << std::endl;//can only be printed if success
+    clients[new_fd].setHost(ipstr);
 }
 
-int Server::handleRegistration(int client_fd) {
-    (void)client_fd;
-    return 0;
-}
+
 
 void Server::handleMessage(std::string& line, Client& client) {
     s_msg message;

@@ -32,15 +32,14 @@ class Server {
         ~Server();
 
         std::string getPassword() const;
-
+        std::map<int, Client> getClients() const;
         void boot(void);
         void serverSocketSetup(void);
         void addToPoll(int fd);
         void removeClient(int idx);
-        void printNewClient(struct sockaddr_storage client_addr) const;
+        //void printNewClient(struct sockaddr_storage client_addr) const;
         void acceptNewClient();
         int readClientData(int idx);
-        int handleRegistration(int client_fd);
         void handleMessage(std::string& line, Client& client);
 
     private:

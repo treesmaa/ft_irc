@@ -2,15 +2,14 @@
 #include "Server.hpp"
 
 Client::Client() {}
-Client::Client(int fd) : fd(fd), username("default_user"), nickname("default_nickname"), registered(false), auth(false) {}
-Client::Client(const Client& original) : fd(original.fd), username(original.username), nickname(original.nickname), registered(original.registered), auth(original.auth), server(original.server) {}
+Client::Client(int fd) : fd(fd), username(""), nickname("*"), password(""), registered(false){}
+Client::Client(const Client& original) : fd(original.fd), username(original.username), nickname(original.nickname), registered(original.registered), server(original.server) {}
 Client& Client::operator=(const Client& other) {
     if (this != &other) {
         fd = other.fd;
         username = other.username;
         nickname = other.nickname;
         registered = other.registered;
-        auth = other.auth;
         server = other.server;
     }
     return *this;
@@ -25,12 +24,23 @@ int Client::getFd() const {
     return fd;
 }
 
-bool Client::isRegistered() const {
-    return registered;
+std::string Client::getNickname() const {
+    return nickname;
 }
 
-bool Client::isAuthenticated() const {
-    return auth;
+std::string Client::getUsername() const {
+    return username;
+}
+
+std::string Client::getPassword() const {
+    return password;
+}
+
+std::string Client::getHost() const {
+    return hostname;
+}
+bool Client::isRegistered() const {
+    return registered;
 }
 
 std::string& Client::getBuffer() {
@@ -49,8 +59,12 @@ void Client::setNickname(const std::string& name) {
     nickname = name;
 }
 
-void Client::authenticate() {
-    auth = true;
+void Client::setPassword(const std::string& pass) {
+    password = pass;
+}
+
+void Client::setHost(const std::string& host) {
+    hostname = host;
 }
 
 void Client::registerClient() {
