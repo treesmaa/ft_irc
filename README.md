@@ -1,4 +1,4 @@
-_This project has been created as part of the 42 curriculum by treesmaa, rjuhasz._
+_This project has been created as part of the 42 curriculum by teesmaa, rjuhasz._
 
 # ft_irc
 IRC server in C++98
