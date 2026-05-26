@@ -2,7 +2,7 @@
 
 Server::Server() {}
 
-Server::Server(int port, char *password) : port(port), password(password), server_fd(-1) {
+Server::Server(int port, char *password) : port(port), password(password), server_fd(-1), creation_date("Mon May 15 2026") {
     //add checks for password?
 }
 
@@ -13,6 +13,10 @@ Server::~Server() {
         if (it->fd != -1)
             close(it->fd);
     }
+}
+
+std::string Server::getCreationDate() const {
+    return creation_date;
 }
 
 std::string Server::getPassword() const {

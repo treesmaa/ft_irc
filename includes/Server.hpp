@@ -33,6 +33,7 @@ class Server {
 
         std::string getPassword() const;
         std::map<int, Client> getClients() const;
+        std::string getCreationDate() const;
         void boot(void);
         void serverSocketSetup(void);
         void addToPoll(int fd);
@@ -48,6 +49,7 @@ class Server {
         int                         server_fd;
         std::vector<struct pollfd>  pfds;
         std::map<int, Client>       clients;
+        std::string                 creation_date;
         //not copiable
         Server(const Server& original);
         Server& operator=(const Server& other);

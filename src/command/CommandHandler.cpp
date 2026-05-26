@@ -68,8 +68,19 @@ void CommandHandler::welcome(Client& client) {
     std::string nick = client.getNickname();
     std::string hostmask = nick + "!" + client.getUsername() + "@" + client.getHost();
 
-    send(client.getFd(), RPL_WELCOME, )
-    //CONTINUE HERE
+    std::string rpl_welcome = ":" + std::string(SERVER) + RPL_WELCOME + nick + " :Welcome to the Internet Relay Network " + hostmask + CRLF;
+    std::string rpl_yourhost = ":" + std::string(SERVER) + RPL_YOURHOST + nick + " :Your host is " + std::string(SERVER) + ", running version 1.0" + CRLF;
+    std::string rpl_created = ":" + std::string(SERVER) + RPL_CREATED + nick + " :This server was created " + client.getServer()->getCreationDate() + CRLF;
+    std::string rpl_myinfo = ":" + std::string(SERVER) + RPL_MYINFO + nick + " " + std::string(SERVER) + " 1.0 io itkol" + CRLF;
+    
+    if (send(client.getFd(), rpl_welcome.c_str(), rpl_welcome.size(), 0) == -1)
+        std::cerr << "Send error" << std::endl;
+    if (send(client.getFd(), rpl_yourhost.c_str(), rpl_yourhost.size(), 0) == -1)
+        std::cerr << "Send error" << std::endl;
+    if (send(client.getFd(), rpl_created.c_str(), rpl_created.size(), 0) == -1)
+        std::cerr << "Send error" << std::endl;
+    if (send(client.getFd(), rpl_myinfo.c_str(), rpl_myinfo.size(), 0) == -1)
+        std::cerr << "Send error" << std::endl;
 }
 
 void CommandHandler::tryToRegister(Client& client) {

@@ -7,8 +7,13 @@
 
 #include <sstream>
 
-#define CRLF "\r\n"
-#define SERVER "lilserv"
+#define CRLF			"\r\n"
+#define SERVER			"lilserv"
+//Welcome messages
+#define RPL_WELCOME		std::string(" 001 ")
+#define RPL_YOURHOST	std::string(" 002 ")
+#define RPL_CREATED		std::string(" 003 ")
+#define RPL_MYINFO		std::string(" 004 ")
 
 enum Numerics {
     // General errors
@@ -42,15 +47,8 @@ enum Numerics {
     ERR_BADCHANNELKEY     = 475,
 
     // Privileges
-    ERR_CHANOPRIVSNEEDED  = 482
+    ERR_CHANOPRIVSNEEDED  = 482,
 };
-
-enum RPL {
-    RPL_WELCOME  = 1,
-    RPL_YOURHOST = 2,
-    RPL_CREATED  = 3,
-    RPL_MYINFO   = 4
-}
 
 class CommandHandler {
     public:
