@@ -13,16 +13,16 @@ class Client {
         Client(const Client& original);
         Client& operator=(const Client& other);
         ~Client();
-
-        int getFd() const;
-        std::string getNickname() const;
-        std::string getUsername() const;
-        std::string getPassword() const;
-        std::string getHost() const;
-        bool isRegistered() const;
-        std::string& getBuffer();
-        Server* getServer() const;
-
+		//getters
+        int				getFd() const;
+        std::string 	getNickname() const;
+        std::string 	getUsername() const;
+        std::string 	getPassword() const;
+        std::string 	getHost() const;
+        bool			isRegistered() const;
+        std::string&	getBuffer();
+        Server* 		getServer() const;
+		//setters
         void setServer(Server *serv);
         void setUsername(const std::string& name);
         void setNickname(const std::string& name);

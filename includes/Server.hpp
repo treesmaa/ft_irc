@@ -30,18 +30,20 @@ class Server {
     public:
         Server(int port, char *password);
         ~Server();
+	
+		//getters
+        std::string				getPassword() const;
+        std::map<int, Client>	getClients() const;
+        std::string				getCreationDate() const;
 
-        std::string getPassword() const;
-        std::map<int, Client> getClients() const;
-        std::string getCreationDate() const;
-        void boot(void);
-        void serverSocketSetup(void);
-        void addToPoll(int fd);
-        void removeClient(int idx);
+        void	boot(void);
+        void	serverSocketSetup(void);
+        void	addToPoll(int fd);
+        void	removeClient(int idx);
         //void printNewClient(struct sockaddr_storage client_addr) const;
-        void acceptNewClient();
-        int readClientData(int idx);
-        void handleMessage(std::string& line, Client& client);
+        void	acceptNewClient();
+        int		readClientData(int idx);
+        void	handleMessage(std::string& line, Client& client);
 
     private:
         int                         port;

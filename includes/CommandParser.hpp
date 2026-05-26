@@ -7,9 +7,9 @@
 
 typedef struct  t_msg
 {
-    std::string prefix;
-    std::string command;
-    std::vector<std::string> parameters;
+    std::string                 prefix;
+    std::string                 command;
+    std::vector<std::string>    parameters;
 }               s_msg;
 
 int parser(const std::string& data, s_msg& message);
