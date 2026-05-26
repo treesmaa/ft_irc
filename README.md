@@ -9,7 +9,6 @@ IRC server in C++98
 ### Connecting with Netcat
 
 You can connect to the IRC server using `nc` (netcat) — no IRC client required.
-The flag for CRLF line endings differs by OS:
 
 **Linux**
 ```sh
