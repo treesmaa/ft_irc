@@ -86,7 +86,7 @@ void CommandHandler::welcome(Client& client) {
 void CommandHandler::tryToRegister(Client& client) {
     if (client.getNickname() == "*" || client.getUsername().empty())
         return;
-    std::string server_pw = client.getServer()->getPassword();
+    std::string server_pw = server.getPassword();
     if (!server_pw.empty()) {
         if (client.getPassword() != server_pw) {
             respond(formReply(ERR_PASSWDMISMATCH, NULL, client), client);
@@ -134,7 +134,7 @@ void CommandHandler::handleNick(s_msg *message, Client& client) {
         respond(formReply(ERR_ERRONEUSNICKNAME, message, client), client);
         return;
     }
-    if (nickInUse(message->parameters[0], client.getServer()->getClients())) {
+    if (nickInUse(message->parameters[0], server.getClients())) {
         respond(formReply(ERR_NICKNAMEINUSE, message, client), client);
         return;
     }
