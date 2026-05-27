@@ -111,9 +111,19 @@ void CommandHandler::handlePass(s_msg *message, Client& client) {
     tryToRegister(client);
 }
 
+bool isSpecial(char c) {
+    return ((c >= 0x5B && c <= 0x60) || (c >= 0x7B && c <= 0x7D));
+}
+
 bool isValidNickname(std::string& nick) {
     if (nick.empty() || nick.length() > 9)
-        return false;//add checks on nickname
+        return false;
+    if (!isalpha(nick[0]) && !isSpecial(nick[0]))
+        return false;
+    for (size_t i = 1; i < nick.size(); i++) {
+        if (!isalnum(nick[i]) && !isSpecial(nick[i]) && nick[i] != '-')
+            return false;
+    }
     return true;
 }
 

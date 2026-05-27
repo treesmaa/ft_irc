@@ -168,15 +168,6 @@ void Server::handleMessage(std::string& line, Client& client) {
     } */
     CommandHandler cmd_handler(*this);
     cmd_handler.handleCommand(&message, client);
-    /*
-    //broadcasting to all clients.
-    for (size_t i = 0; i < pfds.size(); i++) {
-        int dest_fd = pfds[i].fd;
-        if (dest_fd != pfds[idx].fd && dest_fd != server_fd) {
-            if (send(dest_fd, buf, nbytes, 0) == -1)
-                std::cerr << "Error: send(): " << strerror(errno) << std::endl;
-        }
-    } */
 }
 
 int Server::readClientData(int idx) {
