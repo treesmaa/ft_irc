@@ -148,7 +148,7 @@ void Server::acceptNewClient() {
         std::cerr << "Error: inet_ntop() failed: " << strerror(errno) << std::endl;
     }
     else {
-        std::cout << "New connection from " << ipstr << std::endl;
+        std::cout << std::left << std::setw(14) << "[connect]" << " fd:" << new_fd << " host:" << ipstr << std::endl;
         _clients[new_fd] = Client(new_fd, ipstr);
         addToPoll(new_fd);
     }
@@ -194,7 +194,7 @@ int Server::readClientData(int idx) {
         return -1;
     }
     else if (nbytes == 0) {
-        std::cout << "Client fd " << client_fd << " hung up" << std::endl;
+        std::cout << std::left << std::setw(14) << "[disconnect]" << " fd:" << client_fd << " host:" << _clients[client_fd].getHost() << " nickname:" << _clients[client_fd].getNickname() << std::endl;
         return -1;
     }
 

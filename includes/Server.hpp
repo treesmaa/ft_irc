@@ -18,6 +18,7 @@
 #include <vector>
 #include <algorithm>
 #include <map>
+#include <iomanip>
 
 #include "Client.hpp"
 #include "Signal.hpp"
