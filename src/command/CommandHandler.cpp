@@ -1,6 +1,7 @@
 #include "CommandHandler.hpp"
 #include "Server.hpp"
-
+//important: '%s' should be removed from the reply string!
+//it's just to show which replies take additional parameters.
 std::map<int, std::string> initReplies() {
     std::map<int, std::string> r;
 
@@ -13,7 +14,7 @@ std::map<int, std::string> initReplies() {
     // Nickname
     r[ERR_NONICKNAMEGIVEN]    = " :No nickname given";                        // 431
     r[ERR_ERRONEUSNICKNAME]   = " :Erroneous nickname";                    // 432
-    r[ERR_NICKNAMEINUSE]      = "%s :Nickname is already in use";            // 433
+    r[ERR_NICKNAMEINUSE]      = " :Nickname is already in use";            // 433
 
     // Channel / JOIN
     r[ERR_NOSUCHCHANNEL]      = "%s :No such channel";                       // 403
@@ -129,7 +130,7 @@ bool isValidNickname(std::string& nick) {
 
 bool nickInUse(std::string& nick, std::map<int, Client> clients) {
     for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
-        if (it->second.isRegistered() && it->second.getNickname() == nick) {
+        if (it->second.getNickname() == nick) {
             return true;
         }
     }
