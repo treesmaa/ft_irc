@@ -6,11 +6,10 @@ int skipWS(const std::string& data, int pos) {
     return pos;
 }
 
-int getPrefix(const std::string& data, s_msg& message, int pos) {
+int skipPrefix(const std::string& data, int pos) {
     size_t space = data.find(' ');
     if (space == std::string::npos)
         return -1;
-    message.prefix = data.substr(1, space - 1);
     pos = space;
     return skipWS(data, pos);
 }
@@ -43,10 +42,12 @@ int getParameters(const std::string& data, s_msg& message, int pos){
     return 0;
 }
 
-int parser(const std::string& data, s_msg& message) {
+int parse(const std::string& data, s_msg& message) {
+    if (data.empty())
+        return -1;
     int pos = 0;
     if (data[pos] == ':')
-        if ((pos = getPrefix(data, message, pos)) == -1)
+        if ((pos = skipPrefix(data, pos)) == -1)
             return -1;
     if ((pos = getCommand(data, message, pos)) == -1)
         return -1;

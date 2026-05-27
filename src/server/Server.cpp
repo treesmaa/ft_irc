@@ -147,23 +147,21 @@ void Server::acceptNewClient() {
     if (!printable_addr)
         std::cerr << "Error: inet_ntop() failed: " << strerror(errno) << std::endl;
     else
-        std::cout << "New connection from " << ipstr << std::endl;//can only be printed if success
+        std::cout << "New connection from " << ipstr << std::endl;
     clients[new_fd].setHost(ipstr);
 }
 
 
-
 void Server::handleMessage(std::string& line, Client& client) {
     s_msg message;
-    if (parser(line, message) == -1) {
+    if (parse(line, message) == -1) {
         std::cerr << "Parsing error: " << line << std::endl;
         return;
     }
-/*     std::cout << "Prefix: " << message.prefix << std::endl;
-    std::cout << "Command: " << message.command << std::endl;
+/*     std::cout << "Command: [" << message.command << "]" << std::endl;
     std::cout << "Parameters: " << std::endl;
     for (size_t i = 0; i < message.parameters.size(); i++) {
-        std::cout << i << ": " << message.parameters[i] << std::endl;
+        std::cout << i << ": [" << message.parameters[i] << "]" << std::endl;
     } */
     CommandHandler cmd_handler(*this);
     cmd_handler.handleCommand(&message, client);
