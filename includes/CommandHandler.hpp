@@ -1,11 +1,11 @@
 #ifndef COMMANDHANDLER_HPP
 #define COMMANDHANDLER_HPP
 
-#include "Server.hpp"
 #include "CommandParser.hpp"
 #include "Client.hpp"
 
 #include <sstream>
+#include <map>
 
 #define CRLF			"\r\n"
 #define SERVER			"lilserv"
@@ -14,6 +14,8 @@
 #define RPL_YOURHOST	std::string(" 002 ")
 #define RPL_CREATED		std::string(" 003 ")
 #define RPL_MYINFO		std::string(" 004 ")
+
+class Server;
 
 enum Numerics {
     // General errors

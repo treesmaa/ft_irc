@@ -1,4 +1,5 @@
 #include "CommandHandler.hpp"
+#include "Server.hpp"
 
 std::map<int, std::string> initReplies() {
     std::map<int, std::string> r;
@@ -70,7 +71,7 @@ void CommandHandler::welcome(Client& client) {
 
     std::string rpl_welcome = ":" + std::string(SERVER) + RPL_WELCOME + nick + " :Welcome to the Internet Relay Network " + hostmask + CRLF;
     std::string rpl_yourhost = ":" + std::string(SERVER) + RPL_YOURHOST + nick + " :Your host is " + std::string(SERVER) + ", running version 1.0" + CRLF;
-    std::string rpl_created = ":" + std::string(SERVER) + RPL_CREATED + nick + " :This server was created " + client.getServer()->getCreationDate() + CRLF;
+    std::string rpl_created = ":" + std::string(SERVER) + RPL_CREATED + nick + " :This server was created " + server.getCreationDate() + CRLF;
     std::string rpl_myinfo = ":" + std::string(SERVER) + RPL_MYINFO + nick + " " + std::string(SERVER) + " 1.0 io itkol" + CRLF;
     
     if (send(client.getFd(), rpl_welcome.c_str(), rpl_welcome.size(), 0) == -1)

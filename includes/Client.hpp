@@ -4,12 +4,10 @@
 #include <string>
 #include <stdbool.h>
 
-class Server;
-
 class Client {
     public:
         Client();
-        Client(int fd);
+        Client(int fd, const std::string& hostname);
         Client(const Client& original);
         Client& operator=(const Client& other);
         ~Client();
@@ -21,9 +19,7 @@ class Client {
         std::string 	getHost() const;
         bool			isRegistered() const;
         std::string&	getBuffer();
-        Server* 		getServer() const;
 		//setters
-        void setServer(Server *serv);
         void setUsername(const std::string& name);
         void setNickname(const std::string& name);
         void setPassword(const std::string& pass);
@@ -31,14 +27,13 @@ class Client {
         void registerClient();
 
     private:
-        int         fd;
-        std::string username;
-        std::string nickname;
-        std::string password;
-        std::string hostname;
-        bool        registered;
-        std::string buf;
-        Server      *server;
+        int         _fd;
+        std::string _username;
+        std::string _nickname;
+        std::string _password;
+        std::string _hostname;
+        bool        _registered;
+        std::string _buf;
         /*Nickname: max 9 chars, must be unique
         See the protocol grammar rules
         for what may and may not be used

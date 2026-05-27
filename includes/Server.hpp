@@ -46,12 +46,12 @@ class Server {
         void	handleMessage(std::string& line, Client& client);
 
     private:
-        int                         port;
-        std::string                 password;
-        int                         server_fd;
-        std::vector<struct pollfd>  pfds;
-        std::map<int, Client>       clients;
-        std::string                 creation_date;
+        int                         _port;
+        std::string                 _password;
+        int                         _server_fd;
+        std::vector<struct pollfd>  _pfds;
+        std::map<int, Client>       _clients;
+        std::string                 _creation_date;
         //not copiable
         Server(const Server& original);
         Server& operator=(const Server& other);
