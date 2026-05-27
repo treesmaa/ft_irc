@@ -45,18 +45,18 @@ std::map<int, std::string> initReplies() {
     return r;
 }
 
-CommandHandler::CommandHandler(Server& server) : server(server) {
-    replies = initReplies();
+CommandHandler::CommandHandler(Server& server) : _server(server) {
+    _replies = initReplies();
 }
 
 std::string CommandHandler::formReply(int code, s_msg *message, Client& client) {
     std::ostringstream oss;
-    if (code == ERR_NEEDMOREPARAMS)//replies where the response is preceded by the 
-        oss << ":" << SERVER << " " << code << " " << client.getNickname() << " " << message->command << replies[code] << CRLF;
+    if (code == ERR_NEEDMOREPARAMS)
+        oss << ":" << SERVER << " " << code << " " << client.getNickname() << " " << message->command << _replies[code] << CRLF;
     else if (code == ERR_ERRONEUSNICKNAME || code == ERR_NICKNAMEINUSE)
-        oss << ":" << SERVER << " " << code << " " << client.getNickname() << " " << message->parameters[0] << replies[code] << CRLF;
+        oss << ":" << SERVER << " " << code << " " << client.getNickname() << " " << message->parameters[0] << _replies[code] << CRLF;
     else
-        oss << ":" << SERVER << " " << code << " " << client.getNickname() << replies[code] << CRLF;
+        oss << ":" << SERVER << " " << code << " " << client.getNickname() << _replies[code] << CRLF;
     return oss.str();
 }
 
@@ -71,7 +71,7 @@ void CommandHandler::welcome(Client& client) {
 
     std::string rpl_welcome = ":" + std::string(SERVER) + RPL_WELCOME + nick + " :Welcome to the Internet Relay Network " + hostmask + CRLF;
     std::string rpl_yourhost = ":" + std::string(SERVER) + RPL_YOURHOST + nick + " :Your host is " + std::string(SERVER) + ", running version 1.0" + CRLF;
-    std::string rpl_created = ":" + std::string(SERVER) + RPL_CREATED + nick + " :This server was created " + server.getCreationDate() + CRLF;
+    std::string rpl_created = ":" + std::string(SERVER) + RPL_CREATED + nick + " :This server was created " + _server.getCreationDate() + CRLF;
     std::string rpl_myinfo = ":" + std::string(SERVER) + RPL_MYINFO + nick + " " + std::string(SERVER) + " 1.0 io itkol" + CRLF;
     
     if (send(client.getFd(), rpl_welcome.c_str(), rpl_welcome.size(), 0) == -1)
@@ -87,7 +87,7 @@ void CommandHandler::welcome(Client& client) {
 void CommandHandler::tryToRegister(Client& client) {
     if (client.getNickname() == "*" || client.getUsername().empty())
         return;
-    std::string server_pw = server.getPassword();
+    std::string server_pw = _server.getPassword();
     if (!server_pw.empty()) {
         if (client.getPassword() != server_pw) {
             respond(formReply(ERR_PASSWDMISMATCH, NULL, client), client);
@@ -135,7 +135,7 @@ void CommandHandler::handleNick(s_msg *message, Client& client) {
         respond(formReply(ERR_ERRONEUSNICKNAME, message, client), client);
         return;
     }
-    if (nickInUse(message->parameters[0], server.getClients())) {
+    if (nickInUse(message->parameters[0], _server.getClients())) {
         respond(formReply(ERR_NICKNAMEINUSE, message, client), client);
         return;
     }
@@ -152,7 +152,7 @@ void CommandHandler::handleUser(s_msg *message, Client& client) {
         respond(formReply(ERR_NEEDMOREPARAMS, message, client), client);
         return;
     }
-    client.setUsername(message->parameters[0]);//What to do about real name?
+    client.setUsername(message->parameters[0]);
     tryToRegister(client);
 }
 

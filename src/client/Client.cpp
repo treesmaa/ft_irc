@@ -1,9 +1,25 @@
 #include "Client.hpp"
 
+Client::Client()
+    :   _fd(-1),
+        _nickname("*"),
+        _registered(false) {}
 
-Client::Client() {}
-Client::Client(int fd, const std::string& hostname) : _fd(fd), _nickname("*"), _hostname(hostname), _registered(false){}
-Client::Client(const Client& original) : _fd(original._fd), _username(original._username), _nickname(original._nickname), _password(original._password), _hostname(original._hostname), _registered(original._registered), _buf(original._buf) {}
+Client::Client(int fd, const std::string& hostname)
+	:	_fd(fd),
+		_nickname("*"),
+		_hostname(hostname),
+		_registered(false) {}
+
+Client::Client(const Client& original)
+	:	_fd(original._fd),
+		_username(original._username),
+		_nickname(original._nickname),
+		_password(original._password),
+		_hostname(original._hostname),
+		_registered(original._registered),
+		_buf(original._buf) {}
+
 Client& Client::operator=(const Client& other) {
     if (this != &other) {
         _fd = other._fd;

@@ -2,9 +2,11 @@
 
 Server::Server() {}
 
-Server::Server(int port, char *password) : _port(port), _password(password), _server_fd(-1), _creation_date("Mon May 15 2026") {
-    //add checks for password?
-}
+Server::Server(int port, char *password)
+    :   _port(port),
+        _password(password),
+        _server_fd(-1),
+        _creation_date("Mon May 15 2026") {}
 
 Server::~Server() {
     if (_server_fd != -1)

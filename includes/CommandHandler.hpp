@@ -65,8 +65,8 @@ class CommandHandler {
         void            tryToRegister(Client& client);
         void            welcome(Client& client);
     private:
-        Server&                     server;
-        std::map<int, std::string>  replies;
+        Server&                     _server;
+        std::map<int, std::string>  _replies;
 };
 
 #endif
