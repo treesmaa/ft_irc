@@ -195,18 +195,17 @@ int Server::readClientData(int idx) {
         return -1;
     }
 
-    //appending message to client buffer: must check that it does not violate the 512 char max!
     clients[client_fd].getBuffer().append(buf, nbytes);
     size_t pos = 0;
     while ((pos = clients[client_fd].getBuffer().find("\r\n")) != std::string::npos) {
         std::string line = clients[client_fd].getBuffer().substr(0, pos + 2);
-        handleMessage(line, clients[client_fd]);
         clients[client_fd].getBuffer().erase(0, pos + 2);
+        if (line.size() > 512)//message cannot exceed 512 characters (incl. CRLF ("\r\n")) per RFC
+            line = line.substr(0, 510) + CRLF;
+        handleMessage(line, clients[client_fd]);
     }
-
     return 0;
 }
-
 
 void Server::boot() {
 
