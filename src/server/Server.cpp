@@ -158,11 +158,11 @@ void Server::handleMessage(std::string& line, Client& client) {
         std::cerr << "Parsing error: " << line << std::endl;
         return;
     }
-/*     std::cout << "Command: [" << message.command << "]" << std::endl;
+    std::cout << "Command: " << message.command << std::endl;
     std::cout << "Parameters: " << std::endl;
     for (size_t i = 0; i < message.parameters.size(); i++) {
-        std::cout << i << ": [" << message.parameters[i] << "]" << std::endl;
-    } */
+        std::cout << i << ": " << message.parameters[i] << std::endl;
+    }
     CommandHandler cmd_handler(*this);
     cmd_handler.handleCommand(&message, client);
     /*

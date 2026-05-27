@@ -29,7 +29,13 @@ int getCommand(const std::string& data, s_msg& message, int pos) {
 
 int getParameters(const std::string& data, s_msg& message, int pos){
     while (pos < static_cast<int>(data.size()) && data[pos] != '\r') {
-        size_t end = data.find(' ', pos);
+        size_t end;
+        if (data[pos] == ':') {
+            end = data.find('\r', pos);
+            message.parameters.push_back(data.substr(pos + 1, end - pos));
+            return 0;
+        }
+        end = data.find(' ', pos);
         if (end == std::string::npos) {
             end = data.find('\r', pos);
             if (end == std::string::npos)
