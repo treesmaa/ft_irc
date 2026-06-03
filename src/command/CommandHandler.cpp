@@ -167,6 +167,17 @@ void CommandHandler::handleUser(s_msg *message, Client& client) {
     tryToRegister(client);
 }
 
+void CommandHandler::handleQuit(s_msg *message, Client& client) {
+    //custom message handling
+    //send message to clients who are in the same channels as the client
+    std::string reason;
+    if (!message->parameters.empty())
+        reason = "quit:" + message->parameters[0];
+    else
+        reason = "quit";
+    _server.disconnectClient(client, reason);
+}
+
 void CommandHandler::handleCommand(s_msg *message, Client& client) {
     if (message->command == "PASS")
         handlePass(message, client);
@@ -174,5 +185,7 @@ void CommandHandler::handleCommand(s_msg *message, Client& client) {
         handleNick(message, client);
     else if (message->command == "USER")
         handleUser(message, client);
+    else if (message->command == "QUIT")
+        handleQuit(message, client);
 }
 

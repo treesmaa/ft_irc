@@ -43,12 +43,19 @@ void Server::addToPoll(int fd) {
     _pfds.push_back(p);
 }
 
+void Server::removePollFd(int client_fd) {
+    for (std::vector<pollfd>::iterator it = _pfds.begin(); it != _pfds.end(); ++it) {
+        if (it->fd == client_fd) {
+            _pfds.erase(it);
+            break;
+        } 
+    }
+}
 
-void Server::removeClient(int idx) {
-    int client_fd = _pfds[idx].fd;
-    _clients.erase(client_fd);
-    close(client_fd);
-    _pfds.erase(_pfds.begin() + idx);
+void Server::removeClient(int fd) {
+    removePollFd(fd);
+    _clients.erase(fd);
+    close(fd);
 }
 
 /* void Server::printNewClient(struct sockaddr_storage client_addr) const {
@@ -148,12 +155,17 @@ void Server::acceptNewClient() {
         std::cerr << "Error: inet_ntop() failed: " << strerror(errno) << std::endl;
     }
     else {
-        std::cout << std::left << std::setw(14) << "[connect]" << " fd:" << new_fd << " host:" << ipstr << std::endl;
+        std::cout << std::left << std::setw(14) << "[connect]" << " fd=" << new_fd << " host=" << ipstr << std::endl;
         _clients[new_fd] = Client(new_fd, ipstr);
         addToPoll(new_fd);
     }
 }
 
+void Server::disconnectClient(Client & client, std::string reason) {
+    int client_fd = client.getFd();
+    std::cout << std::left << std::setw(14) << "[disconnect]" << " fd=" << client_fd << " host=" << _clients[client_fd].getHost() << " nickname=" << _clients[client_fd].getNickname() << " reason=" << reason << std::endl;
+    removeClient(client_fd);
+}
 
 void Server::handleMessage(std::string& line, Client& client) {
     s_msg message;
@@ -185,7 +197,6 @@ int Server::readClientData(int idx) {
         return -1;
     }
     else if (nbytes == 0) {
-        std::cout << std::left << std::setw(14) << "[disconnect]" << " fd:" << client_fd << " host:" << _clients[client_fd].getHost() << " nickname:" << _clients[client_fd].getNickname() << std::endl;
         return -1;
     }
 
@@ -216,12 +227,11 @@ void Server::boot() {
         size_t i = 0;
         while (i < _pfds.size()) {
             if (_pfds[i].revents & POLLERR) {
-                std::cerr << "POLLERR on fd " << _pfds[i].fd << std::endl;
-                removeClient(i);
+                disconnectClient(_clients[_pfds[i].fd], "POLLERR");
                 continue;
             }
             else if (_pfds[i].revents & POLLHUP) {
-                removeClient(i);
+                disconnectClient(_clients[_pfds[i].fd], "POLLHUP");
                 continue;
             }
             if (_pfds[i].revents & POLLIN) {
@@ -230,7 +240,7 @@ void Server::boot() {
                 }
                 else {
                     if (readClientData(i) == -1) {
-                        removeClient(i);
+                        disconnectClient(_clients[_pfds[i].fd], "data cannot be read");
                         continue;
                     }
                 }

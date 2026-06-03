@@ -33,14 +33,18 @@ class Server {
         ~Server();
 	
 		//getters
-        std::string				getPassword() const;
-        std::map<int, Client>	getClients() const;
-        std::string				getCreationDate() const;
+        std::string				    getPassword() const;
+        std::map<int, Client>	    getClients() const;
+        std::string				    getCreationDate() const;
+
 
         void	boot(void);
         void	serverSocketSetup(void);
         void	addToPoll(int fd);
-        void	removeClient(int idx);
+		void	disconnectClient(Client& client, std::string reason);
+        void	removeClient(int fd);
+		void	removePollFd(int client_fd);
+        
         //void printNewClient(struct sockaddr_storage client_addr) const;
         void	acceptNewClient();
         int		readClientData(int idx);
