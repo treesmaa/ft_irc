@@ -104,7 +104,7 @@ void CommandHandler::handlePass(s_msg *message, Client& client) {
         respond(formReply(ERR_ALREADYREGISTRED, message, client), client);
         return;
     }
-    if (message->parameters.size() == 0) {
+    if (message->parameters.empty()) {
         respond(formReply(ERR_NEEDMOREPARAMS, message, client), client);
         return;
     }
@@ -138,7 +138,7 @@ bool nickInUse(std::string& nick, std::map<int, Client> clients) {
 }
 
 void CommandHandler::handleNick(s_msg *message, Client& client) {
-    if (message->parameters.size() == 0) {
+    if (message->parameters.empty()) {
         respond(formReply(ERR_NONICKNAMEGIVEN, message, client), client);
         return;
     }
@@ -167,7 +167,7 @@ void CommandHandler::handleUser(s_msg *message, Client& client) {
     tryToRegister(client);
 }
 
-void CommandHandler::handleQuit(s_msg *message, Client& client) {
+void CommandHandler::handleQuit(s_msg* message, Client& client) {
     //custom message handling
     //send message to clients who are in the same channels as the client
     std::string reason;
