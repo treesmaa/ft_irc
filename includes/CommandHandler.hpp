@@ -61,6 +61,8 @@ class CommandHandler {
         void            handleNick(s_msg *message, Client& client);
         void            handleUser(s_msg *message, Client& client);
         void            handleQuit(s_msg *message, Client& client);
+        void            handleJoin(s_msg *message, Client& client);
+        void            handlePrivmsg(s_msg *message, Client& client);
         void            respond(std::string reply, Client& client);
         std::string     formReply(int code, s_msg *message, Client& client);
         void            tryToRegister(Client& client);

@@ -29,6 +29,46 @@ std::map<int, Client> Server::getClients() const {
     return _clients;
 }
 
+std::map<std::string, Channel>& Server::getChannels() {
+    return _channels;
+}
+
+Client* Server::getClientByNickname(const std::string& nickname) {
+    for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
+        if (it->second.getNickname() == nickname)
+            return &(it->second);
+    }
+    return NULL;
+}
+
+void Server::sendToClient(int fd, const std::string& message) {
+    if (send(fd, message.c_str(), message.size(), 0) == -1)
+        std::cerr << "Send error" << std::endl;
+}
+
+void Server::broadcastToChannel(const std::string& channel_name, const std::string& message, int except_fd) {
+    std::map<std::string, Channel>::iterator chan_it = _channels.find(channel_name);
+    if (chan_it == _channels.end())
+        return;
+
+    const std::set<int>& members = chan_it->second.getMembers();
+    for (std::set<int>::const_iterator it = members.begin(); it != members.end(); ++it) {
+        if (*it != except_fd)
+            sendToClient(*it, message);
+    }
+}
+
+void Server::removeClientFromChannels(int fd) {
+    std::map<std::string, Channel>::iterator it = _channels.begin();
+    while (it != _channels.end()) {
+        it->second.removeMember(fd);
+        if (it->second.isEmpty())
+            _channels.erase(it++);
+        else
+            ++it;
+    }
+}
+
 std::string intToString(int n) {
     std::ostringstream oss;
     oss << n;
@@ -53,6 +93,7 @@ void Server::removePollFd(int client_fd) {
 }
 
 void Server::removeClient(int fd) {
+    removeClientFromChannels(fd);
     removePollFd(fd);
     _clients.erase(fd);
     close(fd);
@@ -222,11 +263,13 @@ void Server::boot() {
         size_t i = 0;
         while (i < _pfds.size()) {
             if (_pfds[i].revents & POLLERR) {
-                disconnectClient(_clients[_pfds[i].fd], "POLLERR");
+                if (_pfds[i].fd != _server_fd)
+                    disconnectClient(_clients[_pfds[i].fd], "POLLERR");
                 continue;
             }
             else if (_pfds[i].revents & POLLHUP) {
-                disconnectClient(_clients[_pfds[i].fd], "POLLHUP");
+                if (_pfds[i].fd != _server_fd)
+                    disconnectClient(_clients[_pfds[i].fd], "POLLHUP");
                 continue;
             }
             if (_pfds[i].revents & POLLIN) {

@@ -178,7 +178,120 @@ void CommandHandler::handleQuit(s_msg* message, Client& client) {
     _server.disconnectClient(client, reason);
 }
 
+
+static std::string makePrefix(Client& client) {
+    return ":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHost();
+}
+
+static bool isChannelName(const std::string& name) {
+    if (name.empty())
+        return false;
+    if (name[0] != '#' && name[0] != '&')
+        return false;
+    if (name.size() > 200)
+        return false;
+    for (size_t i = 0; i < name.size(); ++i) {
+        if (name[i] == ' ' || name[i] == ',' || name[i] == 7)
+            return false;
+    }
+    return true;
+}
+
+static std::string getNamesList(Channel& channel, Server& server) {
+    std::ostringstream oss;
+    const std::set<int>& members = channel.getMembers();
+    for (std::set<int>::const_iterator it = members.begin(); it != members.end(); ++it) {
+        std::map<int, Client> clients = server.getClients();
+        std::map<int, Client>::iterator client_it = clients.find(*it);
+        if (client_it != clients.end()) {
+            if (oss.tellp() > 0)
+                oss << " ";
+            oss << client_it->second.getNickname();
+        }
+    }
+    return oss.str();
+}
+
+void CommandHandler::handleJoin(s_msg *message, Client& client) {
+    if (message->parameters.empty()) {
+        respond(formReply(ERR_NEEDMOREPARAMS, message, client), client);
+        return;
+    }
+
+    std::string channel_name = message->parameters[0];
+    if (!isChannelName(channel_name)) {
+        std::string reply = ":" + std::string(SERVER) + " 403 " + client.getNickname() + " " + channel_name + " :No such channel" + CRLF;
+        respond(reply, client);
+        return;
+    }
+
+    std::map<std::string, Channel>& channels = _server.getChannels();
+    if (channels.find(channel_name) == channels.end())
+        channels[channel_name] = Channel(channel_name);
+
+    Channel& channel = channels[channel_name];
+    if (channel.hasMember(client.getFd()))
+        return;
+
+    channel.addMember(client.getFd());
+
+    std::string join_msg = makePrefix(client) + " JOIN :" + channel_name + CRLF;
+    _server.broadcastToChannel(channel_name, join_msg, -1);
+
+    std::string names = getNamesList(channel, _server);
+    std::string rpl_names = ":" + std::string(SERVER) + " 353 " + client.getNickname() + " = " + channel_name + " :" + names + CRLF;
+    std::string rpl_end = ":" + std::string(SERVER) + " 366 " + client.getNickname() + " " + channel_name + " :End of /NAMES list" + CRLF;
+    respond(rpl_names, client);
+    respond(rpl_end, client);
+}
+
+void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
+    if (message->parameters.empty()) {
+        std::string reply = ":" + std::string(SERVER) + " 411 " + client.getNickname() + " :No recipient given (PRIVMSG)" + CRLF;
+        respond(reply, client);
+        return;
+    }
+    if (message->parameters.size() < 2 || message->parameters[1].empty()) {
+        respond(formReply(ERR_NOTEXTTOSEND, message, client), client);
+        return;
+    }
+
+    std::string target = message->parameters[0];
+    std::string text = message->parameters[1];
+    std::string privmsg = makePrefix(client) + " PRIVMSG " + target + " :" + text + CRLF;
+
+    if (!target.empty() && (target[0] == '#' || target[0] == '&')) {
+        std::map<std::string, Channel>& channels = _server.getChannels();
+        std::map<std::string, Channel>::iterator chan_it = channels.find(target);
+        if (chan_it == channels.end()) {
+            std::string reply = ":" + std::string(SERVER) + " 403 " + client.getNickname() + " " + target + " :No such channel" + CRLF;
+            respond(reply, client);
+            return;
+        }
+        if (!chan_it->second.hasMember(client.getFd())) {
+            std::string reply = ":" + std::string(SERVER) + " 404 " + client.getNickname() + " " + target + " :Cannot send to channel" + CRLF;
+            respond(reply, client);
+            return;
+        }
+        _server.broadcastToChannel(target, privmsg, client.getFd());
+        return;
+    }
+
+    Client* target_client = _server.getClientByNickname(target);
+    if (!target_client) {
+        std::string reply = ":" + std::string(SERVER) + " 401 " + client.getNickname() + " " + target + " :No such nick/channel" + CRLF;
+        respond(reply, client);
+        return;
+    }
+    respond(privmsg, *target_client);
+}
+
 void CommandHandler::handleCommand(s_msg *message, Client& client) {
+    if (!client.isRegistered() && message->command != "PASS" && message->command != "NICK" && message->command != "USER" && message->command != "QUIT") {
+        respond(formReply(ERR_NOTREGISTERED, message, client), client);
+        return;
+    }
+
     if (message->command == "PASS")
         handlePass(message, client);
     else if (message->command == "NICK")
@@ -187,5 +300,9 @@ void CommandHandler::handleCommand(s_msg *message, Client& client) {
         handleUser(message, client);
     else if (message->command == "QUIT")
         handleQuit(message, client);
+    else if (message->command == "JOIN")
+        handleJoin(message, client);
+    else if (message->command == "PRIVMSG")
+        handlePrivmsg(message, client);
 }
 

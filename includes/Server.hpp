@@ -21,6 +21,7 @@
 #include <iomanip>
 
 #include "Client.hpp"
+#include "Channel.hpp"
 #include "Signal.hpp"
 #include "CommandParser.hpp"
 #include "CommandHandler.hpp"
@@ -35,6 +36,8 @@ class Server {
 		//getters
         std::string				    getPassword() const;
         std::map<int, Client>	    getClients() const;
+        std::map<std::string, Channel>& getChannels();
+        Client*                     getClientByNickname(const std::string& nickname);
         std::string				    getCreationDate() const;
 
 
@@ -44,6 +47,9 @@ class Server {
 		void	disconnectClient(Client& client, std::string reason);
         void	removeClient(int fd);
 		void	removePollFd(int client_fd);
+        void    sendToClient(int fd, const std::string& message);
+        void    broadcastToChannel(const std::string& channel_name, const std::string& message, int except_fd);
+        void    removeClientFromChannels(int fd);
         
         //void printNewClient(struct sockaddr_storage client_addr) const;
         void	acceptNewClient();
@@ -56,6 +62,7 @@ class Server {
         int                         _server_fd;
         std::vector<struct pollfd>  _pfds;
         std::map<int, Client>       _clients;
+        std::map<std::string, Channel> _channels;
         std::string                 _creation_date;
         //not copiable
         Server(const Server& original);
