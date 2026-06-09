@@ -245,6 +245,16 @@ void CommandHandler::handleJoin(s_msg *message, Client& client) {
     respond(rpl_end, client);
 }
 
+std::vector<std::string> splitParameters(const std::string& param) {
+	std::vector<std::string> result;
+	std::istringstream iss(param);
+	std::string token;
+	while (std::getline(iss, token, ',')) {
+		result.push_back(token);
+	}
+	return result;
+}
+
 void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
     if (message->parameters.empty()) {
         std::string reply = ":" + std::string(SERVER) + " 411 " + client.getNickname() + " :No recipient given (PRIVMSG)" + CRLF;
@@ -256,34 +266,60 @@ void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
         return;
     }
 
-    std::string target = message->parameters[0];
+    std::vector<std::string> targets = splitParameters(message->parameters[0]);
     std::string text = message->parameters[1];
-    std::string privmsg = makePrefix(client) + " PRIVMSG " + target + " :" + text + CRLF;
+    std::string privmsg = makePrefix(client) + " PRIVMSG " + targets[0] + " :" + text + CRLF;
 
-    if (!target.empty() && (target[0] == '#' || target[0] == '&')) {
-        std::map<std::string, Channel>& channels = _server.getChannels();
-        std::map<std::string, Channel>::iterator chan_it = channels.find(target);
-        if (chan_it == channels.end()) {
-            std::string reply = ":" + std::string(SERVER) + " 403 " + client.getNickname() + " " + target + " :No such channel" + CRLF;
-            respond(reply, client);
-            return;
-        }
-        if (!chan_it->second.hasMember(client.getFd())) {
-            std::string reply = ":" + std::string(SERVER) + " 404 " + client.getNickname() + " " + target + " :Cannot send to channel" + CRLF;
-            respond(reply, client);
-            return;
-        }
-        _server.broadcastToChannel(target, privmsg, client.getFd());
-        return;
-    }
+   for (std::vector<std::string>::iterator it = targets.begin(); it != targets.end(); ++it)
+	{
+		std::string target = *it;
 
-    Client* target_client = _server.getClientByNickname(target);
-    if (!target_client) {
-        std::string reply = ":" + std::string(SERVER) + " 401 " + client.getNickname() + " " + target + " :No such nick/channel" + CRLF;
-        respond(reply, client);
-        return;
-    }
-    respond(privmsg, *target_client);
+		if (target.empty())
+			continue;
+
+		std::string privmsg = makePrefix(client) + " PRIVMSG "
+			+ target + " :" + text + CRLF;
+
+		if (target[0] == '#' || target[0] == '&')
+		{
+			std::map<std::string, Channel>& channels = _server.getChannels();
+			std::map<std::string, Channel>::iterator chan_it = channels.find(target);
+
+			if (chan_it == channels.end())
+			{
+				std::string reply = ":" + std::string(SERVER) + " 403 "
+					+ client.getNickname() + " " + target
+					+ " :No such channel" + CRLF;
+				respond(reply, client);
+				continue;
+			}
+
+			if (!chan_it->second.hasMember(client.getFd()))
+			{
+				std::string reply = ":" + std::string(SERVER) + " 404 "
+					+ client.getNickname() + " " + target
+					+ " :Cannot send to channel" + CRLF;
+				respond(reply, client);
+				continue;
+			}
+
+			_server.broadcastToChannel(target, privmsg, client.getFd());
+			continue;
+		}
+
+		Client* target_client = _server.getClientByNickname(target);
+
+		if (!target_client)
+		{
+			std::string reply = ":" + std::string(SERVER) + " 401 "
+				+ client.getNickname() + " " + target
+				+ " :No such nick/channel" + CRLF;
+			respond(reply, client);
+			continue;
+		}
+
+		respond(privmsg, *target_client);
+	}
 }
 
 void CommandHandler::handleCommand(s_msg *message, Client& client) {
