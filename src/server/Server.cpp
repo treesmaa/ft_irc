@@ -165,6 +165,7 @@ void Server::serverSocketSetup() {
         throw std::runtime_error(std::string("failed to listen on socket: ") + strerror(errno));
 
     addToPoll(_server_fd);
+    addToPoll(STDIN_FILENO);
     std::cout << "IRC server listening on port " << _port << std::endl;
 }
 
@@ -252,7 +253,7 @@ void Server::boot() {
 
     serverSocketSetup();
 
-    while (!g_stop) {
+    while (!g_stop) {	
 
         if (poll(&_pfds[0], _pfds.size(), -1) == -1) {
             if (errno == EINTR)
@@ -262,7 +263,7 @@ void Server::boot() {
 
         size_t i = 0;
         while (i < _pfds.size()) {
-            if (_pfds[i].revents & POLLERR) {
+			if (_pfds[i].revents & POLLERR) {
                 if (_pfds[i].fd != _server_fd)
                     disconnectClient(_clients[_pfds[i].fd], "POLLERR");
                 continue;
@@ -275,6 +276,15 @@ void Server::boot() {
             if (_pfds[i].revents & POLLIN) {
                 if (_pfds[i].fd == _server_fd) {
                     acceptNewClient();
+                }
+                else if (_pfds[i].fd == STDIN_FILENO) {
+					std::string input;
+					std::getline(std::cin, input);
+
+					if (input == "QUIT" || input == "quit" || input == "exit" || input == "EXIT") {
+						std::cout << "Server shutdown requested." << std::endl;
+						g_stop = true;
+					}
                 }
                 else {
                     if (readClientData(i) == -1) {

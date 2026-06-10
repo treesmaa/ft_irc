@@ -212,39 +212,6 @@ static std::string getNamesList(Channel& channel, Server& server) {
     return oss.str();
 }
 
-void CommandHandler::handleJoin(s_msg *message, Client& client) {
-    if (message->parameters.empty()) {
-        respond(formReply(ERR_NEEDMOREPARAMS, message, client), client);
-        return;
-    }
-
-    std::string channel_name = message->parameters[0];
-    if (!isChannelName(channel_name)) {
-        std::string reply = ":" + std::string(SERVER) + " 403 " + client.getNickname() + " " + channel_name + " :No such channel" + CRLF;
-        respond(reply, client);
-        return;
-    }
-
-    std::map<std::string, Channel>& channels = _server.getChannels();
-    if (channels.find(channel_name) == channels.end())
-        channels[channel_name] = Channel(channel_name);
-
-    Channel& channel = channels[channel_name];
-    if (channel.hasMember(client.getFd()))
-        return;
-
-    channel.addMember(client.getFd());
-
-    std::string join_msg = makePrefix(client) + " JOIN :" + channel_name + CRLF;
-    _server.broadcastToChannel(channel_name, join_msg, -1);
-
-    std::string names = getNamesList(channel, _server);
-    std::string rpl_names = ":" + std::string(SERVER) + " 353 " + client.getNickname() + " = " + channel_name + " :" + names + CRLF;
-    std::string rpl_end = ":" + std::string(SERVER) + " 366 " + client.getNickname() + " " + channel_name + " :End of /NAMES list" + CRLF;
-    respond(rpl_names, client);
-    respond(rpl_end, client);
-}
-
 std::vector<std::string> splitParameters(const std::string& param) {
 	std::vector<std::string> result;
 	std::istringstream iss(param);
@@ -253,6 +220,45 @@ std::vector<std::string> splitParameters(const std::string& param) {
 		result.push_back(token);
 	}
 	return result;
+}
+
+void CommandHandler::handleJoin(s_msg *message, Client& client) {
+    if (message->parameters.empty()) {
+        respond(formReply(ERR_NEEDMOREPARAMS, message, client), client);
+        return;
+    }
+
+    std::vector<std::string> channel_names = splitParameters(message->parameters[0]);
+	
+	for (std::vector<std::string>::iterator it = channel_names.begin(); it != channel_names.end(); ++it) {
+			
+		std::string channel_name = *it;
+
+		if (!isChannelName(channel_name)) {
+			std::string reply = ":" + std::string(SERVER) + " 403 " + client.getNickname() + " " + channel_name + " :No such channel" + CRLF;
+			respond(reply, client);
+			return;
+		}
+
+		std::map<std::string, Channel>& channels = _server.getChannels();
+		if (channels.find(channel_name) == channels.end())
+			channels[channel_name] = Channel(channel_name);
+
+		Channel& channel = channels[channel_name];
+		if (channel.hasMember(client.getFd()))
+			return;
+
+		channel.addMember(client.getFd());
+
+		std::string join_msg = makePrefix(client) + " JOIN :" + channel_name + CRLF;
+		_server.broadcastToChannel(channel_name, join_msg, -1);
+
+		std::string names = getNamesList(channel, _server);
+		std::string rpl_names = ":" + std::string(SERVER) + " 353 " + client.getNickname() + " = " + channel_name + " :" + names + CRLF;
+		std::string rpl_end = ":" + std::string(SERVER) + " 366 " + client.getNickname() + " " + channel_name + " :End of /NAMES list" + CRLF;
+		respond(rpl_names, client);
+		respond(rpl_end, client);
+	}
 }
 
 void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
