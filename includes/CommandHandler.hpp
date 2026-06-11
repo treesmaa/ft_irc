@@ -63,7 +63,6 @@ class CommandHandler {
         void            handleQuit(s_msg *message, Client& client);
         void            handleJoin(s_msg *message, Client& client);
         void            handlePrivmsg(s_msg *message, Client& client);
-        void            respond(std::string reply, Client& client);
         std::string     formReply(int code, std::string str, Client& client);
         std::string     formReply(int code, Client& client);
         std::string     formReply(int code, std::string nick, std::string command, Client& client);
