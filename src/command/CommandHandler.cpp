@@ -17,31 +17,30 @@ std::map<int, std::string> initReplies() {
     r[ERR_NICKNAMEINUSE]      = " :Nickname is already in use";            // 433
 
     // Channel / JOIN
-    r[ERR_NOSUCHCHANNEL]      = "%s :No such channel";                       // 403
-    r[ERR_TOOMANYCHANNELS]    = "%s :You have joined too many channels";     // 405
-    r[ERR_CHANNELISFULL]      = "%s :Cannot join channel (+l)";              // 471
-    r[ERR_INVITEONLYCHAN]     = "%s :Cannot join channel (+i)";              // 473
-    r[ERR_BANNEDFROMCHAN]     = "%s :Cannot join channel (+b)";              // 474
-    r[ERR_BADCHANNELKEY]      = "%s :Cannot join channel (+k)";              // 475
-    r[ERR_USERONCHANNEL]      = "%s %s :is already on channel";              // 443
-    r[ERR_NOTONCHANNEL]       = "%s :You're not on that channel";            // 442
-    r[ERR_USERNOTINCHANNEL]   = "%s %s :They aren't on that channel";        // 441
+    r[ERR_NOSUCHCHANNEL]      = " :No such channel";                       // 403
+    r[ERR_TOOMANYCHANNELS]    = " :You have joined too many channels";     // 405
+    r[ERR_CHANNELISFULL]      = " :Cannot join channel (+l)";              // 471
+    r[ERR_INVITEONLYCHAN]     = " :Cannot join channel (+i)";              // 473
+    r[ERR_BANNEDFROMCHAN]     = " :Cannot join channel (+b)";              // 474
+    r[ERR_BADCHANNELKEY]      = " :Cannot join channel (+k)";              // 475
+    r[ERR_USERONCHANNEL]      = " :is already on channel";              // 443
+    r[ERR_NOTONCHANNEL]       = " :You're not on that channel";            // 442
+    r[ERR_USERNOTINCHANNEL]   = " :They aren't on that channel";        // 441
 
     // Channel operator permissions
-    r[ERR_CHANOPRIVSNEEDED]   = "%s :You're not channel operator";           // 482
+    r[ERR_CHANOPRIVSNEEDED]   = " :You're not channel operator";           // 482
 
     // Messaging
-    r[ERR_NORECIPIENT]        = " :No recipient given (%s)";                  // 411
+    r[ERR_NORECIPIENT]        = " :No recipient given";                  // 411
     r[ERR_NOTEXTTOSEND]       = " :No text to send";                          // 412
-    r[ERR_CANNOTSENDTOCHAN]   = "%s :Cannot send to channel";                // 404
-    r[ERR_NOSUCHNICK]         = "%s :No such nick/channel";                  // 401
+    r[ERR_CANNOTSENDTOCHAN]   = " :Cannot send to channel";                // 404
+    r[ERR_NOSUCHNICK]         = " :No such nick/channel";                  // 401
 
     // MODE
     r[ERR_UNKNOWNMODE]        = "%c :is unknown mode char to me";            // 472
 
     // INVITE
-    r[ERR_USERNOTINCHANNEL]   = "%s %s :They aren't on that channel";        // 441
-    r[ERR_NOTONCHANNEL]       = "%s :You're not on that channel";            // 442
+    r[ERR_NOTONCHANNEL]       = " :You're not on that channel";            // 442
 
     return r;
 }
@@ -50,12 +49,32 @@ CommandHandler::CommandHandler(Server& server) : _server(server) {
     _replies = initReplies();
 }
 
-std::string CommandHandler::formReply(int code, s_msg *message, Client& client) {
+//forms a numeric response for those responses where an extra string (eg command, nickname, channel name) is needed
+//modify as needed!
+std::string CommandHandler::formReply(int code, std::string str, Client& client) {
     std::ostringstream oss;
-    if (code == ERR_NEEDMOREPARAMS)
-        oss << ":" << SERVER << " " << code << " " << client.getNickname() << " " << message->command << _replies[code] << CRLF;
-    else if (code == ERR_ERRONEUSNICKNAME || code == ERR_NICKNAMEINUSE)
-        oss << ":" << SERVER << " " << code << " " << client.getNickname() << " " << message->parameters[0] << _replies[code] << CRLF;
+    if (code == ERR_NEEDMOREPARAMS || code == ERR_ERRONEUSNICKNAME || code == ERR_NICKNAMEINUSE
+        || code == ERR_NOSUCHNICK || code == ERR_CANNOTSENDTOCHAN || code == ERR_NOSUCHCHANNEL || code == ERR_TOOMANYCHANNELS 
+        || code == ERR_CHANNELISFULL || code == ERR_INVITEONLYCHAN || code == ERR_BANNEDFROMCHAN || code == ERR_BADCHANNELKEY
+        || code == ERR_NOTONCHANNEL || code == ERR_CHANOPRIVSNEEDED || code == ERR_NOTONCHANNEL)
+        oss << ":" << SERVER << " " << code << " " << client.getNickname() << " " << str << _replies[code] << CRLF;
+    else if (code == ERR_NORECIPIENT)
+        oss << ":" << SERVER << " " << code << " " << client.getNickname() << _replies[code] << " (" << str << ")" << CRLF;
+    else
+        oss << ":" << SERVER << " " << code << " " << client.getNickname() << _replies[code] << CRLF;
+    return oss.str();
+}
+//forms a numeric response that takes no extra string
+std::string CommandHandler::formReply(int code, Client& client) {
+    std::ostringstream oss;
+    oss << ":" << SERVER << " " << code << " " << client.getNickname() << _replies[code] << CRLF;
+    return oss.str();
+}
+
+std::string CommandHandler::formReply(int code, std::string nick, std::string command, Client& client) {
+    std::ostringstream oss;
+    if (code == ERR_USERONCHANNEL || code == ERR_USERNOTINCHANNEL)
+        oss << ":" << SERVER << " " << code << " " << client.getNickname() << nick << " " << command << _replies[code] << CRLF;
     else
         oss << ":" << SERVER << " " << code << " " << client.getNickname() << _replies[code] << CRLF;
     return oss.str();
@@ -75,14 +94,10 @@ void CommandHandler::welcome(Client& client) {
     std::string rpl_created = ":" + std::string(SERVER) + RPL_CREATED + nick + " :This server was created " + _server.getCreationDate() + CRLF;
     std::string rpl_myinfo = ":" + std::string(SERVER) + RPL_MYINFO + nick + " " + std::string(SERVER) + " 1.0 io itkol" + CRLF;
     
-    if (send(client.getFd(), rpl_welcome.c_str(), rpl_welcome.size(), 0) == -1)
-        std::cerr << "Send error" << std::endl;
-    if (send(client.getFd(), rpl_yourhost.c_str(), rpl_yourhost.size(), 0) == -1)
-        std::cerr << "Send error" << std::endl;
-    if (send(client.getFd(), rpl_created.c_str(), rpl_created.size(), 0) == -1)
-        std::cerr << "Send error" << std::endl;
-    if (send(client.getFd(), rpl_myinfo.c_str(), rpl_myinfo.size(), 0) == -1)
-        std::cerr << "Send error" << std::endl;
+    respond(rpl_welcome.c_str(), client);
+    respond(rpl_yourhost.c_str(), client);
+    respond(rpl_created.c_str(), client);
+    respond(rpl_myinfo.c_str(), client);
 }
 
 void CommandHandler::tryToRegister(Client& client) {
@@ -91,7 +106,7 @@ void CommandHandler::tryToRegister(Client& client) {
     std::string server_pw = _server.getPassword();
     if (!server_pw.empty()) {
         if (client.getPassword() != server_pw) {
-            respond(formReply(ERR_PASSWDMISMATCH, NULL, client), client);
+            respond(formReply(ERR_PASSWDMISMATCH, client), client);
             return;
         }
         client.registerClient();
@@ -101,11 +116,11 @@ void CommandHandler::tryToRegister(Client& client) {
 
 void CommandHandler::handlePass(s_msg *message, Client& client) {
     if (client.isRegistered()) {
-        respond(formReply(ERR_ALREADYREGISTRED, message, client), client);
+        respond(formReply(ERR_ALREADYREGISTRED, client), client);
         return;
     }
     if (message->parameters.empty()) {
-        respond(formReply(ERR_NEEDMOREPARAMS, message, client), client);
+        respond(formReply(ERR_NEEDMOREPARAMS, message->command , client), client);
         return;
     }
     client.setPassword(message->parameters[0]);
@@ -139,15 +154,15 @@ bool nickInUse(std::string& nick, std::map<int, Client> clients) {
 
 void CommandHandler::handleNick(s_msg *message, Client& client) {
     if (message->parameters.empty()) {
-        respond(formReply(ERR_NONICKNAMEGIVEN, message, client), client);
+        respond(formReply(ERR_NONICKNAMEGIVEN, client), client);
         return;
     }
     if (!isValidNickname(message->parameters[0])){
-        respond(formReply(ERR_ERRONEUSNICKNAME, message, client), client);
+        respond(formReply(ERR_ERRONEUSNICKNAME, message->parameters[0], client), client);
         return;
     }
     if (nickInUse(message->parameters[0], _server.getClients())) {
-        respond(formReply(ERR_NICKNAMEINUSE, message, client), client);
+        respond(formReply(ERR_NICKNAMEINUSE, message->parameters[0], client), client);
         return;
     }
     client.setNickname(message->parameters[0]);
@@ -156,11 +171,11 @@ void CommandHandler::handleNick(s_msg *message, Client& client) {
 
 void CommandHandler::handleUser(s_msg *message, Client& client) {
     if (client.isRegistered()) {
-        respond(formReply(ERR_ALREADYREGISTRED, message, client), client);
+        respond(formReply(ERR_ALREADYREGISTRED, client), client);
         return;
     }
     else if (message->parameters.size() < 4) {
-        respond(formReply(ERR_NEEDMOREPARAMS, message, client), client);
+        respond(formReply(ERR_NEEDMOREPARAMS, message->command, client), client);
         return;
     }
     client.setUsername(message->parameters[0]);
@@ -224,7 +239,7 @@ std::vector<std::string> splitParameters(const std::string& param) {
 
 void CommandHandler::handleJoin(s_msg *message, Client& client) {
     if (message->parameters.empty()) {
-        respond(formReply(ERR_NEEDMOREPARAMS, message, client), client);
+        respond(formReply(ERR_NEEDMOREPARAMS, message->command, client), client);
         return;
     }
 
@@ -235,8 +250,7 @@ void CommandHandler::handleJoin(s_msg *message, Client& client) {
 		std::string channel_name = *it;
 
 		if (!isChannelName(channel_name)) {
-			std::string reply = ":" + std::string(SERVER) + " 403 " + client.getNickname() + " " + channel_name + " :No such channel" + CRLF;
-			respond(reply, client);
+			respond(formReply(ERR_NOSUCHCHANNEL, channel_name, client), client);
 			return;
 		}
 
@@ -263,12 +277,11 @@ void CommandHandler::handleJoin(s_msg *message, Client& client) {
 
 void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
     if (message->parameters.empty()) {
-        std::string reply = ":" + std::string(SERVER) + " 411 " + client.getNickname() + " :No recipient given (PRIVMSG)" + CRLF;
-        respond(reply, client);
+        respond(formReply(ERR_NORECIPIENT, message->command, client), client);
         return;
     }
     if (message->parameters.size() < 2 || message->parameters[1].empty()) {
-        respond(formReply(ERR_NOTEXTTOSEND, message, client), client);
+        respond(formReply(ERR_NOTEXTTOSEND, client), client);
         return;
     }
 
@@ -276,8 +289,7 @@ void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
     std::string text = message->parameters[1];
     std::string privmsg = makePrefix(client) + " PRIVMSG " + targets[0] + " :" + text + CRLF;
 
-   for (std::vector<std::string>::iterator it = targets.begin(); it != targets.end(); ++it)
-	{
+   for (std::vector<std::string>::iterator it = targets.begin(); it != targets.end(); ++it) {
 		std::string target = *it;
 
 		if (target.empty())
@@ -286,26 +298,19 @@ void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
 		std::string privmsg = makePrefix(client) + " PRIVMSG "
 			+ target + " :" + text + CRLF;
 
-		if (target[0] == '#' || target[0] == '&')
-		{
+		if (target[0] == '#' || target[0] == '&') {
 			std::map<std::string, Channel>& channels = _server.getChannels();
 			std::map<std::string, Channel>::iterator chan_it = channels.find(target);
 
 			if (chan_it == channels.end())
 			{
-				std::string reply = ":" + std::string(SERVER) + " 403 "
-					+ client.getNickname() + " " + target
-					+ " :No such channel" + CRLF;
-				respond(reply, client);
+				respond(formReply(ERR_NOSUCHNICK, target, client), client);
 				continue;
 			}
 
 			if (!chan_it->second.hasMember(client.getFd()))
 			{
-				std::string reply = ":" + std::string(SERVER) + " 404 "
-					+ client.getNickname() + " " + target
-					+ " :Cannot send to channel" + CRLF;
-				respond(reply, client);
+				respond(formReply(ERR_CANNOTSENDTOCHAN, target, client), client);
 				continue;
 			}
 
@@ -315,12 +320,8 @@ void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
 
 		Client* target_client = _server.getClientByNickname(target);
 
-		if (!target_client)
-		{
-			std::string reply = ":" + std::string(SERVER) + " 401 "
-				+ client.getNickname() + " " + target
-				+ " :No such nick/channel" + CRLF;
-			respond(reply, client);
+		if (!target_client) {
+			respond(formReply(ERR_NOSUCHNICK, target, client), client);
 			continue;
 		}
 
@@ -330,7 +331,7 @@ void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
 
 void CommandHandler::handleCommand(s_msg *message, Client& client) {
     if (!client.isRegistered() && message->command != "PASS" && message->command != "NICK" && message->command != "USER" && message->command != "QUIT") {
-        respond(formReply(ERR_NOTREGISTERED, message, client), client);
+        respond(formReply(ERR_NOTREGISTERED, client), client);
         return;
     }
 
