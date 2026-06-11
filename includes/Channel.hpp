@@ -1,14 +1,31 @@
 #ifndef CHANNEL_HPP
 #define CHANNEL_HPP
 
+#include <string>
+#include <set>
+
 class Channel {
     public:
         Channel();
-        ~Channel();
-    private:
-        Channel(const Channel& original);
+        Channel(const std::string& name);
+		Channel(const Channel& original);
         Channel& operator=(const Channel& other);
+        ~Channel();
+
+        const std::string&      getName() const;
+        const std::set<int>&    getMembers() const;
+        bool                    hasMember(int fd) const;
+        bool                    isEmpty() const;
+
+        void                    addMember(int fd);
+        void                    removeMember(int fd);
+
+    private:
+		
+        std::string             _name;
+        std::set<int>           _members;
 };
+
 #endif
 
 /*A channel is a named group of one or more clients which will all
