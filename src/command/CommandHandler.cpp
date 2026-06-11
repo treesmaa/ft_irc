@@ -101,6 +101,8 @@ void CommandHandler::welcome(Client& client) {
 }
 
 void CommandHandler::tryToRegister(Client& client) {
+    if (client.isRegistered())
+        return;
     if (client.getNickname() == "*" || client.getUsername().empty())
         return;
     std::string server_pw = _server.getPassword();
@@ -164,6 +166,13 @@ void CommandHandler::handleNick(s_msg *message, Client& client) {
     if (nickInUse(message->parameters[0], _server.getClients())) {
         respond(formReply(ERR_NICKNAMEINUSE, message->parameters[0], client), client);
         return;
+    }
+    if (client.isRegistered()) {
+        std::string nick_change_msg = ":" + client.getNickname() + " NICK " + message->parameters[0] + CRLF;
+        std::set<std::string>& channels = client.getChannels();
+        for(std::set<std::string>::iterator it = channels.begin(); it != channels.end(); ++it)
+            _server.broadcastToChannel(*it, nick_change_msg, client.getFd());
+        respond(nick_change_msg, client);
     }
     client.setNickname(message->parameters[0]);
     tryToRegister(client);
@@ -263,6 +272,7 @@ void CommandHandler::handleJoin(s_msg *message, Client& client) {
 			return;
 
 		channel.addMember(client.getFd());
+        client.getChannels().insert(channel_name);
 
 		std::string join_msg = makePrefix(client) + " JOIN :" + channel_name + CRLF;
 		_server.broadcastToChannel(channel_name, join_msg, -1);

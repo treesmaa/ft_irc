@@ -61,6 +61,10 @@ std::string& Client::getBuffer() {
     return _buf;
 }
 
+std::set<std::string>& Client::getChannels() {
+    return _channels;
+}
+
 void Client::setUsername(const std::string& name) {
     _username = name;
 }
