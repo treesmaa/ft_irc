@@ -124,6 +124,17 @@ void CommandHandler::handlePass(s_msg *message, Client& client) {
     tryToRegister(client);
 }
 
+std::set<int> getRecipients(std::set<std::string>& client_channels, std::map<std::string, Channel>& all_channels) {
+    std::set<int> recipients;
+    for (std::set<std::string>::iterator it = client_channels.begin(); it != client_channels.end(); ++it) {
+        std::map<std::string, Channel>::iterator chit = all_channels.find(*it);
+        if (chit == all_channels.end())
+            continue;
+        recipients.insert(chit->second.getMembers().begin(), chit->second.getMembers().end());
+    }
+    return recipients;
+}
+
 bool isSpecial(char c) {
     return ((c >= 0x5B && c <= 0x60) || (c >= 0x7B && c <= 0x7D));
 }
@@ -164,11 +175,7 @@ void CommandHandler::handleNick(s_msg *message, Client& client) {
     }
     if (client.isRegistered()) {
         std::string nick_change_msg = ":" + client.getNickname() + " NICK " + message->parameters[0] + CRLF;
-        std::set<std::string>& client_channels = client.getChannels();
-        std::map<std::string, Channel> & all_channels = _server.getChannels();
-        std::set<int> recipients;
-        for(std::set<std::string>::iterator it = client_channels.begin(); it != client_channels.end(); ++it)
-            recipients.insert(all_channels[*it].getMembers().begin(), all_channels[*it].getMembers().end());
+        std::set<int> recipients = getRecipients(client.getChannels(), _server.getChannels());
         for (std::set<int>::iterator it = recipients.begin(); it != recipients.end(); ++it) {
             if (*it != client.getFd())
                 _server.sendToClient(*it, nick_change_msg);
@@ -192,20 +199,27 @@ void CommandHandler::handleUser(s_msg *message, Client& client) {
     tryToRegister(client);
 }
 
-void CommandHandler::handleQuit(s_msg* message, Client& client) {
-    //custom message handling
-    //send message to clients who are in the same channels as the client
-    std::string reason;
-    if (!message->parameters.empty())
-        reason = "quit:" + message->parameters[0];
-    else
-        reason = "quit";
-    _server.disconnectClient(client, reason);
-}
-
-
 static std::string makePrefix(Client& client) {
     return ":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHost();
+}
+
+void CommandHandler::handleQuit(s_msg* message, Client& client) {
+
+    std::string reason;
+    if (!message->parameters.empty())
+        reason = message->parameters[0];
+    else
+        reason = "Client Quit";
+
+    std::string quit_msg = makePrefix(client) + " QUIT :" + reason + CRLF;
+
+    std::set<int> recipients = getRecipients(client.getChannels(), _server.getChannels());
+
+    for (std::set<int>::iterator it = recipients.begin(); it != recipients.end(); ++it) {
+        if (*it != client.getFd())
+            _server.sendToClient(*it, quit_msg);
+    }
+    _server.disconnectClient(client, reason);
 }
 
 static bool isChannelName(const std::string& name) {
