@@ -32,7 +32,7 @@ int getParameters(const std::string& data, s_msg& message, int pos){
         size_t end;
         if (data[pos] == ':') {
             end = data.find('\r', pos);
-            message.parameters.push_back(data.substr(pos + 1, end - pos));
+            message.parameters.push_back(data.substr(pos + 1, end - pos - 1));
             return 0;
         }
         end = data.find(' ', pos);
