@@ -248,6 +248,10 @@ std::vector<std::string> splitParameters(const std::string& param) {
 }
 
 void CommandHandler::handleJoin(s_msg *message, Client& client) {
+    if (!client.isRegistered()) {
+        _server.sendToClient(client.getFd(), formReply(ERR_NOTREGISTERED, client));
+        return;
+    }
     if (message->parameters.empty()) {
         _server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
         return;
@@ -287,6 +291,11 @@ void CommandHandler::handleJoin(s_msg *message, Client& client) {
 }
 
 void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
+    if (!client.isRegistered()) {
+        _server.sendToClient(client.getFd(), formReply(ERR_NOTREGISTERED, client));
+        return;
+    }
+
     bool automatic_reply = message->command == "NOTICE" ? false : true;
 
     if (message->parameters.empty()) {
@@ -346,11 +355,6 @@ void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
 }
 
 void CommandHandler::handleCommand(s_msg *message, Client& client) {
-    if (!client.isRegistered() && message->command != "PASS" && message->command != "NICK" && message->command != "USER" && message->command != "QUIT") {
-        _server.sendToClient(client.getFd(), formReply(ERR_NOTREGISTERED, client));
-        return;
-    }
-
     if (message->command == "PASS")
         handlePass(message, client);
     else if (message->command == "NICK")

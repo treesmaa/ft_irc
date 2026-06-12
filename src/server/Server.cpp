@@ -219,6 +219,27 @@ void Server::handleMessage(std::string& line, Client& client) {
     cmd_handler.handleCommand(&message, client);
 }
 
+static void debugPrint(const std::string& s)
+{
+    std::cout << "[RECV] ";
+
+    for (size_t i = 0; i < s.size(); ++i)
+    {
+        unsigned char c = s[i];
+
+        if (c == '\r')
+            std::cout << "\\r";
+        else if (c == '\n')
+            std::cout << "\\n\n[RECV] "; // split lines visually
+        else if (c < 32 || c == 127)
+            std::cout << "<" << (int)c << ">";
+        else
+            std::cout << c;
+    }
+
+    std::cout << std::endl;
+}
+
 int Server::readClientData(int idx) {
     char buf[MAX_LENGTH];
     int client_fd = _pfds[idx].fd;
@@ -236,7 +257,10 @@ int Server::readClientData(int idx) {
     else if (nbytes == 0) {
         return -1;
     }
-
+    if (DEBUG_IRC) {
+        std::string raw(buf, nbytes);
+        debugPrint(raw);
+    }
     _clients[client_fd].getBuffer().append(buf, nbytes);
     size_t pos = 0;
     while ((pos = _clients[client_fd].getBuffer().find("\r\n")) != std::string::npos) {
