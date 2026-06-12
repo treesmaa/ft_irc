@@ -48,6 +48,53 @@ int getParameters(const std::string& data, s_msg& message, int pos){
     return 0;
 }
 
+#include <iostream>
+#include <vector>
+#include <string>
+
+static void dumpString(const std::string& s)
+{
+    std::cout << '"';
+
+    for (size_t i = 0; i < s.size(); ++i)
+    {
+        switch (s[i])
+        {
+            case '\r':
+                std::cout << "\\r";
+                break;
+            case '\n':
+                std::cout << "\\n";
+                break;
+            case '\t':
+                std::cout << "\\t";
+                break;
+            default:
+                std::cout << s[i];
+        }
+    }
+
+    std::cout << "\" (len=" << s.size() << ")";
+}
+
+void dumpMessage(const s_msg& msg)
+{
+    std::cout << "=== Parsed Message ===" << std::endl;
+
+    std::cout << "command: ";
+    dumpString(msg.command);
+    std::cout << std::endl;
+
+    for (size_t i = 0; i < msg.parameters.size(); ++i)
+    {
+        std::cout << "param[" << i << "]: ";
+        dumpString(msg.parameters[i]);
+        std::cout << std::endl;
+    }
+
+    std::cout << "======================" << std::endl;
+}
+
 int parse(const std::string& data, s_msg& message) {
     if (data.empty())
         return -1;
@@ -59,5 +106,6 @@ int parse(const std::string& data, s_msg& message) {
         return -1;
     if (getParameters(data, message, pos) == -1)
         return -1;
+    dumpMessage(message);
     return 0;
 }

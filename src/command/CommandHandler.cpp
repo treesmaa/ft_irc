@@ -289,11 +289,14 @@ void CommandHandler::handleJoin(s_msg *message, Client& client) {
 void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
     bool automatic_reply = message->command == "NOTICE" ? false : true;
 
-    if (automatic_reply && message->parameters.empty()) {
-        _server.sendToClient(client.getFd(), formReply(ERR_NORECIPIENT, message->command, client));
+    if (message->parameters.empty()) {
+        if (automatic_reply)
+            _server.sendToClient(client.getFd(), formReply(ERR_NORECIPIENT, message->command, client));
+        return;
     }
-    if (automatic_reply && (message->parameters.size() < 2 || message->parameters[1].empty())) {
-        _server.sendToClient(client.getFd(), formReply(ERR_NOTEXTTOSEND, client));
+    if (message->parameters.size() < 2 || message->parameters[1].empty()) {
+        if (automatic_reply)
+            _server.sendToClient(client.getFd(), formReply(ERR_NOTEXTTOSEND, client));
         return;
     }
 
@@ -314,13 +317,15 @@ void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
 			std::map<std::string, Channel>& channels = _server.getChannels();
 			std::map<std::string, Channel>::iterator chan_it = channels.find(target);
 
-			if (automatic_reply && chan_it == channels.end()) {
-				_server.sendToClient(client.getFd(), formReply(ERR_NOSUCHNICK, target, client));
+			if (chan_it == channels.end()) {
+                if (automatic_reply)
+				    _server.sendToClient(client.getFd(), formReply(ERR_NOSUCHCHANNEL, target, client));
 				continue;
 			}
 
-			if (automatic_reply && !chan_it->second.hasMember(client.getFd())) {
-				_server.sendToClient(client.getFd(), formReply(ERR_CANNOTSENDTOCHAN, target, client));
+			if (!chan_it->second.hasMember(client.getFd())) {
+                if (automatic_reply)
+				    _server.sendToClient(client.getFd(), formReply(ERR_CANNOTSENDTOCHAN, target, client));
 				continue;
 			}
 
@@ -330,8 +335,9 @@ void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
 
 		Client* target_client = _server.getClientByNickname(target);
 
-		if (automatic_reply && !target_client) {
-			_server.sendToClient(client.getFd(), formReply(ERR_NOSUCHNICK, target, client));
+		if (!target_client) {
+            if (automatic_reply)
+			    _server.sendToClient(client.getFd(), formReply(ERR_NOSUCHNICK, target, client));
 			continue;
 		}
 
