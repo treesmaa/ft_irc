@@ -2,6 +2,7 @@
 #define CLIENT_HPP
 
 #include <string>
+#include <set>
 #include <stdbool.h>
 
 class Client {
@@ -12,13 +13,14 @@ class Client {
         Client& operator=(const Client& other);
         ~Client();
 		//getters
-        int				getFd() const;
-        std::string 	getNickname() const;
-        std::string 	getUsername() const;
-        std::string 	getPassword() const;
-        std::string 	getHost() const;
-        bool			isRegistered() const;
-        std::string&	getBuffer();
+        int								getFd() const;
+        std::string 					getNickname() const;
+        std::string 					getUsername() const;
+        std::string 					getPassword() const;
+        std::string 					getHost() const;
+        bool							isRegistered() const;
+        std::string&					getBuffer();
+		std::set<std::string>&			getChannels();
 		//setters
         void setUsername(const std::string& name);
         void setNickname(const std::string& name);
@@ -27,21 +29,14 @@ class Client {
         void registerClient();
 
     private:
-        int         _fd;
-        std::string _username;
-        std::string _nickname;
-        std::string _password;
-        std::string _hostname;
-        bool        _registered;
-        std::string _buf;
-        /*Nickname: max 9 chars, must be unique
-        See the protocol grammar rules
-        for what may and may not be used
-        in a nickname. In addition to the nickname, all servers must have the
-   following information about all clients: the real name of the host
-   that the client is running on, the username of the client on that
-   host, and the server to which the client is connected.*/
-
+        int         				_fd;
+        std::string 				_username;
+        std::string 				_nickname;
+        std::string 				_password;
+        std::string 				_hostname;
+        bool        				_registered;
+        std::string 				_buf;
+		std::set<std::string>		_channels;
 };
 
 #endif
