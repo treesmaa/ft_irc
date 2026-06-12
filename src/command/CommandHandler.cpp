@@ -106,9 +106,9 @@ void CommandHandler::tryToRegister(Client& client) {
             _server.sendToClient(client.getFd(), formReply(ERR_PASSWDMISMATCH, client));
             return;
         }
-        client.registerClient();
-        welcome(client);
     }
+    client.registerClient();
+    welcome(client);
 }
 
 void CommandHandler::handlePass(s_msg *message, Client& client) {
