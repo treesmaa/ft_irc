@@ -325,7 +325,6 @@ void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
 
     std::vector<std::string> targets = splitParameters(message->parameters[0]);
     std::string text = message->parameters[1];
-    std::string privmsg = makePrefix(client) + " PRIVMSG " + targets[0] + " :" + text + CRLF;
 
    for (std::vector<std::string>::iterator it = targets.begin(); it != targets.end(); ++it) {
 		std::string target = *it;
@@ -333,7 +332,7 @@ void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
 		if (target.empty())
 			continue;
 
-		std::string privmsg = makePrefix(client) + " PRIVMSG "
+		std::string msg = makePrefix(client) + " " + message->command + " "
 			+ target + " :" + text + CRLF;
 
 		if (target[0] == '#' || target[0] == '&') {
@@ -352,7 +351,7 @@ void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
 				continue;
 			}
 
-			_server.broadcastToChannel(target, privmsg, client.getFd());
+			_server.broadcastToChannel(target, msg, client.getFd());
 			continue;
 		}
 
@@ -364,7 +363,7 @@ void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
 			continue;
 		}
 
-		_server.sendToClient((*target_client).getFd(), privmsg);
+		_server.sendToClient((*target_client).getFd(), msg);
 	}
 }
 
