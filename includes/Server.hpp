@@ -25,6 +25,7 @@
 #include "Signal.hpp"
 #include "CommandParser.hpp"
 #include "CommandHandler.hpp"
+#include "Debug.hpp"
 
 #define MAX_LENGTH 512
 

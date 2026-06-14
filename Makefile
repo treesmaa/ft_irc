@@ -5,39 +5,53 @@ CXXFLAGS := -Wall -Wextra -Werror -std=c++98 -MMD -MP
 
 INCLUDES := -Iincludes
 
-SRC_MAIN 	:= src/main.cpp
+# ---------------- SOURCES ----------------
 
-SRC_SERVER	:= src/server/Server.cpp \
+SRC_MAIN := src/main.cpp
 
-SRC_CLIENT	:= src/client/Client.cpp \
+SRC_SERVER := src/server/Server.cpp
 
-SRC_CHANNEL := src/channel/Channel.cpp \
+SRC_CLIENT := src/client/Client.cpp
 
-SRC_COMMAND := src/command/CommandHandler.cpp \
-	src/command/CommandParser.cpp \
+SRC_CHANNEL := src/channel/Channel.cpp
+
+SRC_COMMAND := \
+	src/command/CommandHandler.cpp \
+	src/command/CommandParser.cpp
+
+SRC_DEBUG := src/debug/Debug.cpp
 
 SRC := \
 	$(SRC_MAIN) \
 	$(SRC_SERVER) \
 	$(SRC_CLIENT) \
 	$(SRC_CHANNEL) \
-	$(SRC_COMMAND)
+	$(SRC_COMMAND) \
+	$(SRC_DEBUG)
 
-OBJS_DIR := obj/
+# ---------------- OBJECTS ----------------
 
-OBJS := $(patsubst src/%.cpp,$(OBJS_DIR)%.o,$(SRC))
-DEP := $(OBJS:.o=.d)
+OBJS_DIR := obj
+OBJS := $(patsubst src/%.cpp,$(OBJS_DIR)/%.o,$(SRC))
+DEPS := $(OBJS:.o=.d)
 
-# --------------------------------------------------
+# ---------------- RULES ----------------
 
 all: $(NAME)
 
 $(NAME): $(OBJS)
-	$(CXX) $(CXXFLAGS) $(OBJS) -o $@
+	$(CXX) $(CXXFLAGS) $(OBJS) -o $(NAME)
 
-$(OBJS_DIR)%.o: src/%.cpp
+$(OBJS_DIR)/%.o: src/%.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+# ---------------- DEBUG BUILD ----------------
+
+debug: CXXFLAGS += -g -DDEBUG
+debug: fclean $(NAME)
+
+# ---------------- CLEAN ----------------
 
 clean:
 	rm -rf $(OBJS_DIR)
@@ -47,6 +61,8 @@ fclean: clean
 
 re: fclean all
 
--include $(DEP)
+# ---------------- DEPENDENCIES ----------------
 
-.PHONY: all clean fclean re
+-include $(DEPS)
+
+.PHONY: all debug clean fclean re

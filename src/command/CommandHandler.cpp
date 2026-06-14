@@ -106,9 +106,9 @@ void CommandHandler::tryToRegister(Client& client) {
             _server.sendToClient(client.getFd(), formReply(ERR_PASSWDMISMATCH, client));
             return;
         }
-        client.registerClient();
-        welcome(client);
     }
+    client.registerClient();
+    welcome(client);
 }
 
 void CommandHandler::handlePass(s_msg *message, Client& client) {
@@ -122,6 +122,17 @@ void CommandHandler::handlePass(s_msg *message, Client& client) {
     }
     client.setPassword(message->parameters[0]);
     tryToRegister(client);
+}
+
+std::set<int> getRecipients(std::set<std::string>& client_channels, std::map<std::string, Channel>& all_channels) {
+    std::set<int> recipients;
+    for (std::set<std::string>::iterator it = client_channels.begin(); it != client_channels.end(); ++it) {
+        std::map<std::string, Channel>::iterator chit = all_channels.find(*it);
+        if (chit == all_channels.end())
+            continue;
+        recipients.insert(chit->second.getMembers().begin(), chit->second.getMembers().end());
+    }
+    return recipients;
 }
 
 bool isSpecial(char c) {
@@ -164,11 +175,7 @@ void CommandHandler::handleNick(s_msg *message, Client& client) {
     }
     if (client.isRegistered()) {
         std::string nick_change_msg = ":" + client.getNickname() + " NICK " + message->parameters[0] + CRLF;
-        std::set<std::string>& client_channels = client.getChannels();
-        std::map<std::string, Channel> & all_channels = _server.getChannels();
-        std::set<int> recipients;
-        for(std::set<std::string>::iterator it = client_channels.begin(); it != client_channels.end(); ++it)
-            recipients.insert(all_channels[*it].getMembers().begin(), all_channels[*it].getMembers().end());
+        std::set<int> recipients = getRecipients(client.getChannels(), _server.getChannels());
         for (std::set<int>::iterator it = recipients.begin(); it != recipients.end(); ++it) {
             if (*it != client.getFd())
                 _server.sendToClient(*it, nick_change_msg);
@@ -192,20 +199,27 @@ void CommandHandler::handleUser(s_msg *message, Client& client) {
     tryToRegister(client);
 }
 
-void CommandHandler::handleQuit(s_msg* message, Client& client) {
-    //custom message handling
-    //send message to clients who are in the same channels as the client
-    std::string reason;
-    if (!message->parameters.empty())
-        reason = "quit:" + message->parameters[0];
-    else
-        reason = "quit";
-    _server.disconnectClient(client, reason);
-}
-
-
 static std::string makePrefix(Client& client) {
     return ":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHost();
+}
+
+void CommandHandler::handleQuit(s_msg* message, Client& client) {
+
+    std::string reason;
+    if (!message->parameters.empty())
+        reason = message->parameters[0];
+    else
+        reason = "Client Quit";
+
+    std::string quit_msg = makePrefix(client) + " QUIT :" + reason + CRLF;
+
+    std::set<int> recipients = getRecipients(client.getChannels(), _server.getChannels());
+
+    for (std::set<int>::iterator it = recipients.begin(); it != recipients.end(); ++it) {
+        if (*it != client.getFd())
+            _server.sendToClient(*it, quit_msg);
+    }
+    _server.disconnectClient(client, reason);
 }
 
 static bool isChannelName(const std::string& name) {
@@ -248,6 +262,10 @@ std::vector<std::string> splitParameters(const std::string& param) {
 }
 
 void CommandHandler::handleJoin(s_msg *message, Client& client) {
+    if (!client.isRegistered()) {
+        _server.sendToClient(client.getFd(), formReply(ERR_NOTREGISTERED, client));
+        return;
+    }
     if (message->parameters.empty()) {
         _server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
         return;
@@ -287,17 +305,26 @@ void CommandHandler::handleJoin(s_msg *message, Client& client) {
 }
 
 void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
+    if (!client.isRegistered()) {
+        _server.sendToClient(client.getFd(), formReply(ERR_NOTREGISTERED, client));
+        return;
+    }
+
+    bool automatic_reply = message->command == "NOTICE" ? false : true;
+
     if (message->parameters.empty()) {
-        _server.sendToClient(client.getFd(), formReply(ERR_NORECIPIENT, message->command, client));
+        if (automatic_reply)
+            _server.sendToClient(client.getFd(), formReply(ERR_NORECIPIENT, message->command, client));
+        return;
     }
     if (message->parameters.size() < 2 || message->parameters[1].empty()) {
-        _server.sendToClient(client.getFd(), formReply(ERR_NOTEXTTOSEND, client));
+        if (automatic_reply)
+            _server.sendToClient(client.getFd(), formReply(ERR_NOTEXTTOSEND, client));
         return;
     }
 
     std::vector<std::string> targets = splitParameters(message->parameters[0]);
     std::string text = message->parameters[1];
-    std::string privmsg = makePrefix(client) + " PRIVMSG " + targets[0] + " :" + text + CRLF;
 
    for (std::vector<std::string>::iterator it = targets.begin(); it != targets.end(); ++it) {
 		std::string target = *it;
@@ -305,7 +332,7 @@ void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
 		if (target.empty())
 			continue;
 
-		std::string privmsg = makePrefix(client) + " PRIVMSG "
+		std::string msg = makePrefix(client) + " " + message->command + " "
 			+ target + " :" + text + CRLF;
 
 		if (target[0] == '#' || target[0] == '&') {
@@ -313,36 +340,34 @@ void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
 			std::map<std::string, Channel>::iterator chan_it = channels.find(target);
 
 			if (chan_it == channels.end()) {
-				_server.sendToClient(client.getFd(), formReply(ERR_NOSUCHNICK, target, client));
+                if (automatic_reply)
+				    _server.sendToClient(client.getFd(), formReply(ERR_NOSUCHCHANNEL, target, client));
 				continue;
 			}
 
 			if (!chan_it->second.hasMember(client.getFd())) {
-				_server.sendToClient(client.getFd(), formReply(ERR_CANNOTSENDTOCHAN, target, client));
+                if (automatic_reply)
+				    _server.sendToClient(client.getFd(), formReply(ERR_CANNOTSENDTOCHAN, target, client));
 				continue;
 			}
 
-			_server.broadcastToChannel(target, privmsg, client.getFd());
+			_server.broadcastToChannel(target, msg, client.getFd());
 			continue;
 		}
 
 		Client* target_client = _server.getClientByNickname(target);
 
 		if (!target_client) {
-			_server.sendToClient(client.getFd(), formReply(ERR_NOSUCHNICK, target, client));
+            if (automatic_reply)
+			    _server.sendToClient(client.getFd(), formReply(ERR_NOSUCHNICK, target, client));
 			continue;
 		}
 
-		_server.sendToClient((*target_client).getFd(), privmsg);
+		_server.sendToClient((*target_client).getFd(), msg);
 	}
 }
 
 void CommandHandler::handleCommand(s_msg *message, Client& client) {
-    if (!client.isRegistered() && message->command != "PASS" && message->command != "NICK" && message->command != "USER" && message->command != "QUIT") {
-        _server.sendToClient(client.getFd(), formReply(ERR_NOTREGISTERED, client));
-        return;
-    }
-
     if (message->command == "PASS")
         handlePass(message, client);
     else if (message->command == "NICK")
@@ -353,7 +378,7 @@ void CommandHandler::handleCommand(s_msg *message, Client& client) {
         handleQuit(message, client);
     else if (message->command == "JOIN")
         handleJoin(message, client);
-    else if (message->command == "PRIVMSG")
+    else if (message->command == "PRIVMSG" || message->command == "NOTICE")
         handlePrivmsg(message, client);
 }
 

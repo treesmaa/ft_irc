@@ -237,6 +237,8 @@ int Server::readClientData(int idx) {
         return -1;
     }
 
+    DEBUG_PRINT(std::string(buf, nbytes));
+
     _clients[client_fd].getBuffer().append(buf, nbytes);
     size_t pos = 0;
     while ((pos = _clients[client_fd].getBuffer().find("\r\n")) != std::string::npos) {
