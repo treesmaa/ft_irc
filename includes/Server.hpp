@@ -27,8 +27,6 @@
 #include "CommandHandler.hpp"
 #include "Debug.hpp"
 
-#define DEBUG_IRC 1
-
 #define MAX_LENGTH 512
 
 class Server {
