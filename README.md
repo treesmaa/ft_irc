@@ -6,6 +6,27 @@ IRC server in C++98
 ## Description
 
 ## Instructions
+
+### Building and Running
+
+**Build the server**
+```sh
+make
+```
+
+**Start the server**
+```sh
+./ircserv <port> <password>
+```
+
+**Example**
+```sh
+./ircserv 6667 mypassword
+```
+
+- **port**: the port number the server will listen on (e.g. `6667`)
+- **password**: the connection password clients must provide to register
+
 ### Connecting with Netcat
 
 You can connect to the IRC server using `nc` (netcat) — no IRC client required.
