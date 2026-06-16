@@ -206,6 +206,7 @@ void Server::acceptNewClient() {
 void Server::disconnectClient(Client & client, std::string reason) {
     int client_fd = client.getFd();
     std::cout << std::left << std::setw(14) << "[disconnect]" << " fd=" << client_fd << " host=" << _clients[client_fd].getHost() << " nickname=" << _clients[client_fd].getNickname() << " reason=" << reason << std::endl;
+	sendToClient(client_fd, reason + CRLF);
     removeClient(client_fd);
 }
 
@@ -283,7 +284,12 @@ void Server::boot() {
 					std::string input;
 					std::getline(std::cin, input);
 
-					if (input == "QUIT" || input == "quit" || input == "exit" || input == "EXIT") {
+					if (input == "QUIT" || input == "quit" || input == "exit" || input == "EXIT") {						
+                        for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ) {
+                            Client &client = it->second;
+                            ++it;
+                            disconnectClient(client, "Server shutdown, goodbye!");
+						}
 						std::cout << "Server shutdown requested." << std::endl;
 						g_stop = true;
 					}
