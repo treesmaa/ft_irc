@@ -40,3 +40,15 @@ void Channel::addMember(int fd) {
 void Channel::removeMember(int fd) {
     _members.erase(fd);
 }
+
+void Channel::addOperator(int fd) {
+	_operators.insert(fd);
+}
+
+void Channel::removeOperator(int fd) {
+	_operators.erase(fd);
+}
+
+bool Channel::isOperator(int fd) const {
+	return _operators.find(fd) != _operators.end();
+}

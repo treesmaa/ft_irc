@@ -19,11 +19,15 @@ class Channel {
 
         void                    addMember(int fd);
         void                    removeMember(int fd);
+        void                    addOperator(int fd);
+        void                    removeOperator(int fd);
+        bool                    isOperator(int fd) const;
 
     private:
 		
         std::string             _name;
         std::set<int>           _members;
+		std::set<int>           _operators;
 };
 
 #endif

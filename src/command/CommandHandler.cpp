@@ -380,5 +380,15 @@ void CommandHandler::handleCommand(s_msg *message, Client& client) {
         handleJoin(message, client);
     else if (message->command == "PRIVMSG" || message->command == "NOTICE")
         handlePrivmsg(message, client);
+	else if (message->commad == "MODE")
+		handleMode(message, client);
+	else if (message->command == "INVITE")
+		handleInvite(message, client);
+	else if (message->command == "KICK")
+		handleKick(message, client);
+	else if (message->command == "PART")
+		handlePart(message, client);
+	else
+		_server.sendToClient(client.getFd(), formReply(ERR_UNKNOWNCOMMAND, message->command, client));
 }
 

@@ -57,12 +57,19 @@ class CommandHandler {
         CommandHandler(Server& server);
 
         void            handleCommand(s_msg *message, Client& client);
+		
         void            handlePass(s_msg *message, Client& client);
         void            handleNick(s_msg *message, Client& client);
         void            handleUser(s_msg *message, Client& client);
         void            handleQuit(s_msg *message, Client& client);
         void            handleJoin(s_msg *message, Client& client);
         void            handlePrivmsg(s_msg *message, Client& client);
+		
+		void			handleMode(s_msg *message, Client& client);
+		void			handleInvite(s_msg *message, Client& client);
+		void			handleKick(s_msg *message, Client& client);
+		void			handlePart(s_msg *message, Client& client);
+		
         std::string     formReply(int code, std::string str, Client& client);
         std::string     formReply(int code, Client& client);
         std::string     formReply(int code, std::string nick, std::string command, Client& client);
