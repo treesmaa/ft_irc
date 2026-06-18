@@ -404,8 +404,71 @@ void CommandHandler::handleMode(s_msg *message, Client& client) {
 	std::string target = message->parameters[0];
 	std::cout << "Mode command received for target: " << target << std::endl;
 
-	// need to handle all the toggles
-	
+	if (message->parameters[1][0] == '+') {
+		if (message->parameters[1].find('o') != std::string::npos) {
+			if (message->parameters.size() < 3) {
+				_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
+				return;
+			}
+			std::string nick_to_op = message->parameters[2];
+			Client* target_client = _server.getClientByNickname(nick_to_op);
+			if (!target_client) {
+				_server.sendToClient(client.getFd(), formReply(ERR_NOSUCHNICK, nick_to_op, client));
+				return;
+			}
+			thisChannel.addOperator(target_client->getFd());
+		} else if (message->parameters[1].find('i') != std::string::npos) {
+			thisChannel.setInviteOnly(true);
+		} else if (message->parameters[1].find('k') != std::string::npos) {
+			thisChannel.setPassword(message->parameters[2]);
+		} else if (message->parameters[1].find('l') != std::string::npos) {
+			if (message->parameters.size() < 3) {
+				_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
+				return;
+			}
+			int limit = std::atoi(message->parameters[2].c_str());
+			thisChannel.setMemberLimit(limit);
+		} else if (message->parameters[1].find('t') != std::string::npos) {
+			if (message->parameters.size() < 3) {
+				_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
+				return;
+			}
+			std::string topic = message->parameters[2];
+			thisChannel.setTopic(topic);
+		} else {
+			_server.sendToClient(client.getFd(), formReply(ERR_UNKNOWNMODE, message->parameters[1], client));
+			return;
+		}
+	} else if (message->parameters[1][0] == '-') {
+		if (message->parameters[1].find('o') != std::string::npos) {
+			if (message->parameters.size() < 3) {
+				_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
+				return;
+			}
+			std::string nick_to_deop = message->parameters[2];
+			Client* target_client = _server.getClientByNickname(nick_to_deop);
+			if (!target_client) {
+				_server.sendToClient(client.getFd(), formReply(ERR_NOSUCHNICK, nick_to_deop, client));
+				return;
+			}
+			thisChannel.removeOperator(target_client->getFd());
+		} else if (message->parameters[1].find('i') != std::string::npos) {
+			thisChannel.setInviteOnly(false);
+		} else if (message->parameters[1].find('k') != std::string::npos) {
+			thisChannel.removePassword();
+		} else if (message->parameters[1].find('l') != std::string::npos) {
+			thisChannel.setMemberLimit(-1); 
+		} else if (message->parameters[1].find('t') != std::string::npos) {
+			thisChannel.setTopic("");
+		} else {
+			_server.sendToClient(client.getFd(), formReply(ERR_UNKNOWNMODE, message->parameters[1], client));
+			return;
+		}
+	} else {
+		_server.sendToClient(client.getFd(), formReply(ERR_UNKNOWNMODE, message->parameters[1], client));
+		return;
+	}
+
 }
 
 void CommandHandler::handleCommand(s_msg *message, Client& client) {

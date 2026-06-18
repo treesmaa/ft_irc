@@ -19,15 +19,35 @@ class Channel {
 
         void                    addMember(int fd);
         void                    removeMember(int fd);
+
+		void					setMemberLimit(int limit);
+		int						getMemberLimit() const;
+		bool 					hasLimit() const;
+
         void                    addOperator(int fd);
         void                    removeOperator(int fd);
         bool                    isOperator(int fd) const;
+
+		void					setInviteOnly(bool inviteOnly);
+
+		bool					hasPassword() const;
+		void					setPassword(const std::string& password);
+		void					removePassword();
+
+		bool					hasTopic() const;
+		void					setTopic(const std::string& topic);
+		const std::string&		getTopic() const;
 
     private:
 		
         std::string             _name;
         std::set<int>           _members;
 		std::set<int>           _operators;
+		bool					_inviteOnly;
+		bool					_hasPassword;
+		std::string				_password;
+		std::string				_topic;
+		int						_memberLimit;
 };
 
 #endif
