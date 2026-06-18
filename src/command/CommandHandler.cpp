@@ -377,28 +377,35 @@ void CommandHandler::handleMode(s_msg *message, Client& client) {
 		_server.sendToClient(client.getFd(), formReply(ERR_NOTREGISTERED, client));
 		return;
 	}
+	
 	if (message->parameters.empty()) {
 		_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
 		return;
 	}
+
+    std::map<std::string, Channel>& channels = _server.getChannels();
+    std::map<std::string, Channel>::iterator it = channels.find(message->parameters[0]);
+    if (it == channels.end()) {
+        _server.sendToClient(client.getFd(), formReply(ERR_NOSUCHCHANNEL, message->parameters[0], client));
+        return;
+    }
+
+    Channel& thisChannel = it->second;
+	if (!thisChannel.isOperator(client.getFd())) {
+		_server.sendToClient(client.getFd(), formReply(ERR_CHANOPRIVSNEEDED, message->parameters[0], client));
+		return;
+	}
+
+	if (message->parameters.size() < 2) {
+		_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
+		return;
+	}
+
 	std::string target = message->parameters[0];
-	if (target[0] == '#' || target[0] == '&') {
-		std::map<std::string, Channel>& channels = _server.getChannels();
-		std::map<std::string, Channel>::iterator chan_it = channels.find(target);
-		if (chan_it == channels.end()) {
-			_server.sendToClient(client.getFd(), formReply(ERR_NOSUCHCHANNEL, target, client));
-			return;
-		}
-		//handle channel mode changes here
-	}
-	else {
-		Client* target_client = _server.getClientByNickname(target);
-		if (!target_client) {
-			_server.sendToClient(client.getFd(), formReply(ERR_NOSUCHNICK, target, client));
-			return;
-		}
-		//handle user mode changes here
-	}
+	std::cout << "Mode command received for target: " << target << std::endl;
+
+	// need to handle all the toggles
+	
 }
 
 void CommandHandler::handleCommand(s_msg *message, Client& client) {
