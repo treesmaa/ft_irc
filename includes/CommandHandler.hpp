@@ -23,6 +23,7 @@ enum Numerics {
     ERR_NOSUCHCHANNEL     = 403,
     ERR_CANNOTSENDTOCHAN  = 404,
     ERR_TOOMANYCHANNELS   = 405,
+    RPL_CHANNELMODEIS     = 324,
     ERR_NORECIPIENT       = 411,
     ERR_NOTEXTTOSEND      = 412,
 
@@ -75,6 +76,8 @@ class CommandHandler {
         std::string     formReply(int code, std::string nick, std::string command, Client& client);
         void            tryToRegister(Client& client);
         void            welcome(Client& client);
+
+		void 			sendModeSuccess(const std::string& mode, Client& client, const std::string& target);
     private:
         Server&                     _server;
         std::map<int, std::string>  _replies;

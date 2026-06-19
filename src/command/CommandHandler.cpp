@@ -27,6 +27,9 @@ std::map<int, std::string> initReplies() {
     r[ERR_NOTONCHANNEL]       = " :You're not on that channel";            // 442
     r[ERR_USERNOTINCHANNEL]   = " :They aren't on that channel";        // 441
 
+	// MODE success
+	r[RPL_CHANNELMODEIS]      = "";                                        // 324
+
     // Channel operator permissions
     r[ERR_CHANOPRIVSNEEDED]   = " :You're not channel operator";           // 482
 
@@ -56,7 +59,7 @@ std::string CommandHandler::formReply(int code, std::string str, Client& client)
     if (code == ERR_NEEDMOREPARAMS || code == ERR_ERRONEUSNICKNAME || code == ERR_NICKNAMEINUSE
         || code == ERR_NOSUCHNICK || code == ERR_CANNOTSENDTOCHAN || code == ERR_NOSUCHCHANNEL || code == ERR_TOOMANYCHANNELS 
         || code == ERR_CHANNELISFULL || code == ERR_INVITEONLYCHAN || code == ERR_BANNEDFROMCHAN || code == ERR_BADCHANNELKEY
-        || code == ERR_NOTONCHANNEL || code == ERR_CHANOPRIVSNEEDED || code == ERR_NOTONCHANNEL)
+		|| code == ERR_NOTONCHANNEL || code == ERR_CHANOPRIVSNEEDED || code == ERR_NOTONCHANNEL || code == RPL_CHANNELMODEIS)
         oss << ":" << SERVER << " " << code << " " << client.getNickname() << " " << str << _replies[code] << CRLF;
     else if (code == ERR_NORECIPIENT)
         oss << ":" << SERVER << " " << code << " " << client.getNickname() << _replies[code] << " (" << str << ")" << CRLF;
@@ -372,6 +375,10 @@ void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
 	}
 }
 
+void CommandHandler::sendModeSuccess(const std::string& mode, Client& client, const std::string& target) {
+		_server.sendToClient(client.getFd(), formReply(RPL_CHANNELMODEIS, target + " " + mode, client));
+	}
+
 void CommandHandler::handleMode(s_msg *message, Client& client) {
 	if (!client.isRegistered()) {
 		_server.sendToClient(client.getFd(), formReply(ERR_NOTREGISTERED, client));
@@ -416,11 +423,22 @@ void CommandHandler::handleMode(s_msg *message, Client& client) {
 				_server.sendToClient(client.getFd(), formReply(ERR_NOSUCHNICK, nick_to_op, client));
 				return;
 			}
+			if (!thisChannel.hasMember(target_client->getFd())) {
+				_server.sendToClient(client.getFd(), formReply(ERR_USERNOTINCHANNEL, nick_to_op, target, client));
+				return;
+			}
 			thisChannel.addOperator(target_client->getFd());
+			sendModeSuccess("+o " + nick_to_op, client, target);
 		} else if (message->parameters[1].find('i') != std::string::npos) {
 			thisChannel.setInviteOnly(true);
+			sendModeSuccess("+i", client, target);
 		} else if (message->parameters[1].find('k') != std::string::npos) {
+			if (message->parameters.size() < 3) {
+				_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
+				return;
+			}
 			thisChannel.setPassword(message->parameters[2]);
+			sendModeSuccess("+k " + message->parameters[2], client, target);
 		} else if (message->parameters[1].find('l') != std::string::npos) {
 			if (message->parameters.size() < 3) {
 				_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
@@ -428,8 +446,10 @@ void CommandHandler::handleMode(s_msg *message, Client& client) {
 			}
 			int limit = std::atoi(message->parameters[2].c_str());
 			thisChannel.setMemberLimit(limit);
+			sendModeSuccess("+l " + message->parameters[2], client, target);
 		} else if (message->parameters[1].find('t') != std::string::npos) {
 			thisChannel.setRestrictedTopic(true);
+			sendModeSuccess("+t", client, target);
 		} else {
 			_server.sendToClient(client.getFd(), formReply(ERR_UNKNOWNMODE, message->parameters[1], client));
 			return;
@@ -446,15 +466,24 @@ void CommandHandler::handleMode(s_msg *message, Client& client) {
 				_server.sendToClient(client.getFd(), formReply(ERR_NOSUCHNICK, nick_to_deop, client));
 				return;
 			}
+			if (!thisChannel.hasMember(target_client->getFd())) {
+				_server.sendToClient(client.getFd(), formReply(ERR_USERNOTINCHANNEL, nick_to_deop, target, client));
+				return;
+			}
 			thisChannel.removeOperator(target_client->getFd());
+			sendModeSuccess("-o " + nick_to_deop, client, target);
 		} else if (message->parameters[1].find('i') != std::string::npos) {
 			thisChannel.setInviteOnly(false);
+			sendModeSuccess("-i", client, target);
 		} else if (message->parameters[1].find('k') != std::string::npos) {
 			thisChannel.removePassword();
+			sendModeSuccess("-k", client, target);
 		} else if (message->parameters[1].find('l') != std::string::npos) {
 			thisChannel.setMemberLimit(-1); 
+			sendModeSuccess("-l", client, target);
 		} else if (message->parameters[1].find('t') != std::string::npos) {
 			thisChannel.setRestrictedTopic(false);
+			sendModeSuccess("-t", client, target);
 		} else {
 			_server.sendToClient(client.getFd(), formReply(ERR_UNKNOWNMODE, message->parameters[1], client));
 			return;
