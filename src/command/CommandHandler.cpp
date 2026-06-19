@@ -515,6 +515,41 @@ void CommandHandler::handleInvite(s_msg *message, Client& client) {
 	_server.sendToClient(target_client->getFd(), invite_msg);
 }
 
+void CommandHandler::handleTopic(s_msg *message, Client& client) {
+	if (!client.isRegistered()) {
+		_server.sendToClient(client.getFd(), formReply(ERR_NOTREGISTERED, client));
+		return;
+	}
+
+	if (message->parameters.size() < 2) {
+		_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
+		return;
+	}
+
+	std::map<std::string, Channel>& channels = _server.getChannels();
+    std::map<std::string, Channel>::iterator it = channels.find(message->parameters[0]);
+    if (it == channels.end()) {
+        _server.sendToClient(client.getFd(), formReply(ERR_NOSUCHCHANNEL, message->parameters[0], client));
+        return;
+    }
+
+    Channel& thisChannel = it->second;
+	if (!thisChannel.isOperator(client.getFd())) {
+		_server.sendToClient(client.getFd(), formReply(ERR_CHANOPRIVSNEEDED, message->parameters[0], client));
+		return;
+	}
+
+	if (message->parameters.size() == 2) {
+		thisChannel.setTopic(message->parameters[1]);
+		std::string topic_msg = makePrefix(client) + " TOPIC " + message->parameters[0] + " :" + message->parameters[1] + CRLF;
+		_server.broadcastToChannel(message->parameters[0], topic_msg, -1);
+	} else {
+		_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
+		return;
+	}
+
+}
+
 void CommandHandler::handleCommand(s_msg *message, Client& client) {
     if (message->command == "PASS")
         handlePass(message, client);
@@ -534,8 +569,8 @@ void CommandHandler::handleCommand(s_msg *message, Client& client) {
 		handleInvite(message, client);
 	// else if (message->command == "KICK")
 	// 	handleKick(message, client);
-	// else if (message->command == "TOPIC")
-	// 	handleTopic(message, client);
+	else if (message->command == "TOPIC")
+		handleTopic(message, client);
 	else
 		_server.sendToClient(client.getFd(), formReply(ERR_UNKNOWNMODE, message->command, client));
 }

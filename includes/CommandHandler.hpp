@@ -68,7 +68,7 @@ class CommandHandler {
 		void			handleMode(s_msg *message, Client& client);
 		void			handleInvite(s_msg *message, Client& client);
 		void			handleKick(s_msg *message, Client& client);
-		void			handlePart(s_msg *message, Client& client);
+		void			handleTopic(s_msg *message, Client& client);
 		
         std::string     formReply(int code, std::string str, Client& client);
         std::string     formReply(int code, Client& client);
