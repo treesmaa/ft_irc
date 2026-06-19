@@ -34,7 +34,8 @@ class Channel {
 		void					setPassword(const std::string& password);
 		void					removePassword();
 
-		bool					hasTopic() const;
+		bool					hasRestrictedTopic() const;
+		void					setRestrictedTopic(bool restricted);
 		void					setTopic(const std::string& topic);
 		const std::string&		getTopic() const;
 
@@ -46,7 +47,8 @@ class Channel {
 		bool					_inviteOnly;
 		bool					_hasPassword;
 		std::string				_password;
-		std::string				_topic;
+		bool					_hasRestrictedTopic;
+		std::string				_topic;		
 		int						_memberLimit;
 };
 

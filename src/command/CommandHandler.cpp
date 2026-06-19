@@ -429,12 +429,7 @@ void CommandHandler::handleMode(s_msg *message, Client& client) {
 			int limit = std::atoi(message->parameters[2].c_str());
 			thisChannel.setMemberLimit(limit);
 		} else if (message->parameters[1].find('t') != std::string::npos) {
-			if (message->parameters.size() < 3) {
-				_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
-				return;
-			}
-			std::string topic = message->parameters[2];
-			thisChannel.setTopic(topic);
+			thisChannel.setRestrictedTopic(true);
 		} else {
 			_server.sendToClient(client.getFd(), formReply(ERR_UNKNOWNMODE, message->parameters[1], client));
 			return;
@@ -459,7 +454,7 @@ void CommandHandler::handleMode(s_msg *message, Client& client) {
 		} else if (message->parameters[1].find('l') != std::string::npos) {
 			thisChannel.setMemberLimit(-1); 
 		} else if (message->parameters[1].find('t') != std::string::npos) {
-			thisChannel.setTopic("");
+			thisChannel.setRestrictedTopic(false);
 		} else {
 			_server.sendToClient(client.getFd(), formReply(ERR_UNKNOWNMODE, message->parameters[1], client));
 			return;
@@ -469,6 +464,55 @@ void CommandHandler::handleMode(s_msg *message, Client& client) {
 		return;
 	}
 
+}
+
+void CommandHandler::handleInvite(s_msg *message, Client& client) {
+	if (!client.isRegistered()) {
+		_server.sendToClient(client.getFd(), formReply(ERR_NOTREGISTERED, client));
+		return;
+	}
+
+	if (message->parameters.size() < 2) {
+		_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
+		return;
+	}
+
+	std::string nick_to_invite = message->parameters[0];
+	std::string channel_name = message->parameters[1];
+
+	Client* target_client = _server.getClientByNickname(nick_to_invite);
+	if (!target_client) {
+		_server.sendToClient(client.getFd(), formReply(ERR_NOSUCHNICK, nick_to_invite, client));
+		return;
+	}
+
+	std::map<std::string, Channel>& channels = _server.getChannels();
+	std::map<std::string, Channel>::iterator it = channels.find(channel_name);
+	if (it == channels.end()) {
+		_server.sendToClient(client.getFd(), formReply(ERR_NOSUCHCHANNEL, channel_name, client));
+		return;
+	}
+
+	Channel& thisChannel = it->second;
+	if (!thisChannel.hasMember(client.getFd())) {
+		_server.sendToClient(client.getFd(), formReply(ERR_NOTONCHANNEL, channel_name, client));
+		return;
+	}
+
+	size_t limit = thisChannel.getMemberLimit();
+	if (thisChannel.hasLimit() && thisChannel.getMembers().size() >= limit) {
+		_server.sendToClient(client.getFd(), formReply(ERR_CHANNELISFULL, channel_name, client));
+		return;
+	}
+
+	thisChannel.addMember(target_client->getFd());
+	target_client->getChannels().insert(channel_name);
+
+	std::string join_msg = makePrefix(*target_client) + " JOIN :" + channel_name + CRLF;
+	std::string invite_msg = makePrefix(client) + " INVITE " + nick_to_invite + " :" + channel_name + CRLF;
+
+	_server.broadcastToChannel(channel_name, join_msg, -1);
+	_server.sendToClient(target_client->getFd(), invite_msg);
 }
 
 void CommandHandler::handleCommand(s_msg *message, Client& client) {
@@ -486,12 +530,12 @@ void CommandHandler::handleCommand(s_msg *message, Client& client) {
         handlePrivmsg(message, client);
 	else if (message->command == "MODE")
 		handleMode(message, client);
-	// else if (message->command == "INVITE")
-	// 	handleInvite(message, client);
+	else if (message->command == "INVITE")
+		handleInvite(message, client);
 	// else if (message->command == "KICK")
 	// 	handleKick(message, client);
-	// else if (message->command == "PART")
-	// 	handlePart(message, client);
+	// else if (message->command == "TOPIC")
+	// 	handleTopic(message, client);
 	else
 		_server.sendToClient(client.getFd(), formReply(ERR_UNKNOWNMODE, message->command, client));
 }
