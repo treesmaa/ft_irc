@@ -550,6 +550,54 @@ void CommandHandler::handleTopic(s_msg *message, Client& client) {
 
 }
 
+void CommandHandler::handleKick(s_msg *message, Client& client) {
+	if (!client.isRegistered()) {
+		_server.sendToClient(client.getFd(), formReply(ERR_NOTREGISTERED, client));
+		return;
+	}
+
+	if (message->parameters.size() < 2) {
+		_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
+		return;
+	}
+
+	std::string channel_name = message->parameters[0];
+	std::string nick_to_kick = message->parameters[1];
+	std::string reason = (message->parameters.size() >= 3) ? message->parameters[2] : "No reason specified";
+
+	std::map<std::string, Channel>& channels = _server.getChannels();
+	std::map<std::string, Channel>::iterator it = channels.find(channel_name);
+	if (it == channels.end()) {
+		_server.sendToClient(client.getFd(), formReply(ERR_NOSUCHCHANNEL, channel_name, client));
+		return;
+	}
+
+	Channel& thisChannel = it->second;
+	if (!thisChannel.isOperator(client.getFd())) {
+		_server.sendToClient(client.getFd(), formReply(ERR_CHANOPRIVSNEEDED, channel_name, client));
+		return;
+	}
+
+	Client* target_client = _server.getClientByNickname(nick_to_kick);
+	if (!target_client) {
+		_server.sendToClient(client.getFd(), formReply(ERR_NOSUCHNICK, nick_to_kick, client));
+		return;
+	}
+
+	if (!thisChannel.hasMember(target_client->getFd())) {
+		_server.sendToClient(client.getFd(), formReply(ERR_USERNOTINCHANNEL, nick_to_kick, channel_name, client));
+		return;
+	}
+
+	thisChannel.removeMember(target_client->getFd());
+	target_client->getChannels().erase(channel_name);
+
+	_server.sendToClient(target_client->getFd(), makePrefix(client) + " KICK " + channel_name + " " + nick_to_kick + " :" + reason + CRLF);
+
+	std::string kick_msg = makePrefix(client) + " KICK " + channel_name + " " + nick_to_kick + " :" + reason + CRLF;
+	_server.broadcastToChannel(channel_name, kick_msg, -1);
+}
+
 void CommandHandler::handleCommand(s_msg *message, Client& client) {
     if (message->command == "PASS")
         handlePass(message, client);
@@ -567,8 +615,8 @@ void CommandHandler::handleCommand(s_msg *message, Client& client) {
 		handleMode(message, client);
 	else if (message->command == "INVITE")
 		handleInvite(message, client);
-	// else if (message->command == "KICK")
-	// 	handleKick(message, client);
+	else if (message->command == "KICK")
+		handleKick(message, client);
 	else if (message->command == "TOPIC")
 		handleTopic(message, client);
 	else
