@@ -445,6 +445,10 @@ void CommandHandler::handleMode(s_msg *message, Client& client) {
 				return;
 			}
 			int limit = std::atoi(message->parameters[2].c_str());
+			if (limit <= 0) {
+				_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
+				return;
+			}
 			thisChannel.setMemberLimit(limit);
 			sendModeSuccess("+l " + message->parameters[2], client, target);
 		} else if (message->parameters[1].find('t') != std::string::npos) {
