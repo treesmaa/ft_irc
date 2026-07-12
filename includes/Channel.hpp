@@ -36,6 +36,7 @@ class Channel {
 
 		bool					hasPassword() const;
 		void					setPassword(const std::string& password);
+		std::string				getPassword() const;
 		void					removePassword();
 
 		bool					hasRestrictedTopic() const;

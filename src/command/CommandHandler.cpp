@@ -297,14 +297,24 @@ void CommandHandler::handleJoin(s_msg *message, Client& client) {
     }
 
     std::vector<std::string> channel_names = splitParameters(message->parameters[0]);
-	
-	for (std::vector<std::string>::iterator it = channel_names.begin(); it != channel_names.end(); ++it) {
-			
-		std::string channel_name = *it;
+	std::vector<std::string> keys;
+
+	if (message->parameters.size() > 1)
+	keys = splitParameters(message->parameters[1]);
+
+	for (size_t i = 0; i < channel_names.size(); ++i) {
+		std::string channel_name = channel_names[i];
+		std::string provided_key;
+
+		if (i < keys.size())
+			provided_key = keys[i];
 
 		if (!isChannelName(channel_name)) {
-			_server.sendToClient(client.getFd(), formReply(ERR_NOSUCHCHANNEL, channel_name, client));
-			return;
+			_server.sendToClient(
+				client.getFd(),
+				formReply(ERR_NOSUCHCHANNEL, channel_name, client)
+			);
+			continue;
 		}
 
 		std::map<std::string, Channel>& channels = _server.getChannels();
@@ -319,8 +329,17 @@ void CommandHandler::handleJoin(s_msg *message, Client& client) {
 		Channel& channel = channels[channel_name];
 
 		if (channel.hasMember(client.getFd())) {
-			_server.sendToClient(client.getFd(), formReply(ERR_USERONCHANNEL, channel_name, client));
-			return;
+			continue;
+		}
+
+		if (!new_channel
+			&& channel.hasPassword()
+			&& provided_key != channel.getPassword()) {
+			_server.sendToClient(
+				client.getFd(),
+				formReply(ERR_BADCHANNELKEY, channel_name, client)
+			);
+			continue;
 		}
 
 		if (!new_channel
@@ -330,19 +349,40 @@ void CommandHandler::handleJoin(s_msg *message, Client& client) {
 				client.getFd(),
 				formReply(ERR_INVITEONLYCHAN, channel_name, client)
 			);
-			return;
+			continue;
+		}
+
+		if (!new_channel
+			&& channel.hasLimit()
+			&& (int)channel.getMembers().size() >= channel.getMemberLimit()) {
+			_server.sendToClient(
+				client.getFd(),
+				formReply(ERR_CHANNELISFULL, channel_name, client)
+			);
+			continue;
 		}
 
 		channel.addMember(client.getFd());
 		channel.removeInvitedUser(client.getFd());
-        client.getChannels().insert(channel_name);
+		client.getChannels().insert(channel_name);
 
-		std::string join_msg = makePrefix(client) + " JOIN :" + channel_name + CRLF;
+		std::string join_msg =
+			makePrefix(client) + " JOIN :" + channel_name + CRLF;
+
 		_server.broadcastToChannel(channel_name, join_msg, -1);
 
 		std::string names = getNamesList(channel, _server);
-		std::string rpl_names = ":" + std::string(SERVER) + " 353 " + client.getNickname() + " = " + channel_name + " :" + names + CRLF;
-		std::string rpl_end = ":" + std::string(SERVER) + " 366 " + client.getNickname() + " " + channel_name + " :End of /NAMES list" + CRLF;
+
+		std::string rpl_names =
+			":" + std::string(SERVER) + " 353 "
+			+ client.getNickname() + " = "
+			+ channel_name + " :" + names + CRLF;
+
+		std::string rpl_end =
+			":" + std::string(SERVER) + " 366 "
+			+ client.getNickname() + " "
+			+ channel_name + " :End of /NAMES list" + CRLF;
+
 		_server.sendToClient(client.getFd(), rpl_names);
 		_server.sendToClient(client.getFd(), rpl_end);
 	}
@@ -529,6 +569,16 @@ void CommandHandler::handleMode(s_msg *message, Client& client) {
 			thisChannel.setInviteOnly(false);
 			sendModeSuccess("-i", client, target);
 		} else if (message->parameters[1].find('k') != std::string::npos) {
+			if (thisChannel.hasPassword()) {
+				if (message->parameters.size() < 3) {
+					_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
+					return;
+				}
+				if (message->parameters[2] != thisChannel.getPassword()) {
+					_server.sendToClient(client.getFd(), formReply(ERR_BADCHANNELKEY, target, client));
+					return;
+				}
+			}
 			thisChannel.removePassword();
 			sendModeSuccess("-k", client, target);
 		} else if (message->parameters[1].find('l') != std::string::npos) {

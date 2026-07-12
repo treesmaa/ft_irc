@@ -95,6 +95,10 @@ void Channel::removePassword() {
 	_hasPassword = false;
 }
 
+std::string Channel::getPassword() const {
+	return _password;
+}
+
 bool Channel::hasRestrictedTopic() const {
 	return _hasRestrictedTopic;
 }
