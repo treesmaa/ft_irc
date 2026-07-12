@@ -91,7 +91,6 @@ void Channel::setRestrictedTopic(bool restricted) {
 
 void Channel::setTopic(const std::string& topic) {
 	_topic = topic;
-	_hasRestrictedTopic = true;
 }
 
 const std::string& Channel::getTopic() const {

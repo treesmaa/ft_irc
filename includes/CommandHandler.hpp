@@ -20,12 +20,15 @@
 class Server;
 
 enum Numerics {
+	
+	//Channel modes
+	RPL_CHANNELMODEIS     = 324,
+
     // General errors
     ERR_NOSUCHNICK        = 401,
     ERR_NOSUCHCHANNEL     = 403,
     ERR_CANNOTSENDTOCHAN  = 404,
-    ERR_TOOMANYCHANNELS   = 405,
-    RPL_CHANNELMODEIS     = 324,
+    ERR_TOOMANYCHANNELS   = 405,    
     ERR_NORECIPIENT       = 411,
     ERR_NOTEXTTOSEND      = 412,
 

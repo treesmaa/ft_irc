@@ -40,10 +40,13 @@ std::map<int, std::string> initReplies() {
     r[ERR_NOSUCHNICK]         = " :No such nick/channel";                  // 401
 
     // MODE
-    r[ERR_UNKNOWNMODE]        = "%c :is unknown mode char to me";            // 472
+    r[ERR_UNKNOWNMODE]        = " :No such mode modifier";            // 472
 
     // INVITE
     r[ERR_NOTONCHANNEL]       = " :You're not on that channel";            // 442
+
+	//UNKNOWN COMMAND
+	r[ERR_UNKNOWNCOMMAND]       = " :Unknown command";                     // 421
 
     return r;
 }
@@ -403,6 +406,12 @@ void CommandHandler::handleMode(s_msg *message, Client& client) {
 		_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
 		return;
 	}
+	
+	std::string target = message->parameters[0];
+	if (!isChannelName(target)) {
+    // User MODE is not implemented.
+    return;
+	}
 
     std::map<std::string, Channel>& channels = _server.getChannels();
     std::map<std::string, Channel>::iterator it = channels.find(message->parameters[0]);
@@ -417,9 +426,9 @@ void CommandHandler::handleMode(s_msg *message, Client& client) {
 		return;
 	}
 
-	std::string target = message->parameters[0];
+	
 	std::string appliedModes = getChannelModes(thisChannel);
-
+	
 	if (message->parameters.size() < 2) {
 		if (appliedModes == "+") {
 			_server.sendToClient(client.getFd(), formReply(RPL_CHANNELMODEIS, target, client));
@@ -574,7 +583,7 @@ void CommandHandler::handleTopic(s_msg *message, Client& client) {
 		return;
 	}
 
-	if (message->parameters.size() < 2) {
+	if (message->parameters.empty()) {
 		_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
 		return;
 	}
@@ -587,7 +596,25 @@ void CommandHandler::handleTopic(s_msg *message, Client& client) {
     }
 
     Channel& thisChannel = it->second;
-	if (!thisChannel.isOperator(client.getFd())) {
+	if (message->parameters.size() < 2) {
+		if (!thisChannel.getTopic().empty()) {
+			std::string rpl_topic = ":" + std::string(SERVER) + " 332 " + client.getNickname()
+				+ " " + message->parameters[0] + " :" + thisChannel.getTopic() + CRLF;
+			_server.sendToClient(client.getFd(), rpl_topic);
+		} else {
+			std::string rpl_notopic = ":" + std::string(SERVER) + " 331 " + client.getNickname()
+				+ " " + message->parameters[0] + " :No topic is set" + CRLF;
+			_server.sendToClient(client.getFd(), rpl_notopic);
+		}
+		return;
+	}
+
+	if (!thisChannel.hasMember(client.getFd())) {
+		_server.sendToClient(client.getFd(), formReply(ERR_NOTONCHANNEL, message->parameters[0], client));
+		return;
+	}
+
+	if (thisChannel.hasRestrictedTopic() && !thisChannel.isOperator(client.getFd())) {
 		_server.sendToClient(client.getFd(), formReply(ERR_CHANOPRIVSNEEDED, message->parameters[0], client));
 		return;
 	}
