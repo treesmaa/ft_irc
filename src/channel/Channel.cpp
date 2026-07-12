@@ -63,6 +63,10 @@ void Channel::setInviteOnly(bool inviteOnly) {
 	_inviteOnly = inviteOnly;
 }
 
+bool Channel::isInviteOnly() const {
+	return _inviteOnly;
+}
+
 bool Channel::hasPassword() const {
 	return _hasPassword;
 }

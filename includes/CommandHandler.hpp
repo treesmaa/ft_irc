@@ -14,6 +14,8 @@
 #define RPL_YOURHOST	std::string(" 002 ")
 #define RPL_CREATED		std::string(" 003 ")
 #define RPL_MYINFO		std::string(" 004 ")
+//No modes set
+#define NO_MODES_SET	std::string(" No modes set ")
 
 class Server;
 
@@ -26,6 +28,9 @@ enum Numerics {
     RPL_CHANNELMODEIS     = 324,
     ERR_NORECIPIENT       = 411,
     ERR_NOTEXTTOSEND      = 412,
+
+    // Channel errors
+	ERR_UNKNOWNCOMMAND    = 421,
 
     // Nick / Channel user errors
     ERR_NONICKNAMEGIVEN   = 431,
@@ -48,6 +53,7 @@ enum Numerics {
     ERR_INVITEONLYCHAN    = 473,
     ERR_BANNEDFROMCHAN    = 474,
     ERR_BADCHANNELKEY     = 475,
+
 
     // Privileges
     ERR_CHANOPRIVSNEEDED  = 482,

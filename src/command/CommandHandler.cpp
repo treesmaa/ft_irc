@@ -256,6 +256,20 @@ static std::string getNamesList(Channel& channel, Server& server) {
     return oss.str();
 }
 
+static std::string getChannelModes(Channel& channel) {
+	std::ostringstream oss;
+	oss << "+";
+	if (channel.isInviteOnly())
+		oss << "i";
+	if (channel.hasRestrictedTopic())
+		oss << "t";
+	if (channel.hasPassword())
+		oss << "k";
+	if (channel.hasLimit())
+		oss << "l";
+	return oss.str();
+}
+
 std::vector<std::string> splitParameters(const std::string& param) {
 	std::vector<std::string> result;
 	std::istringstream iss(param);
@@ -403,12 +417,18 @@ void CommandHandler::handleMode(s_msg *message, Client& client) {
 		return;
 	}
 
+	std::string target = message->parameters[0];
+	std::string appliedModes = getChannelModes(thisChannel);
+
 	if (message->parameters.size() < 2) {
-		_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
+		if (appliedModes == "+") {
+			_server.sendToClient(client.getFd(), formReply(RPL_CHANNELMODEIS, target, client));
+		return;
+		}
+		_server.sendToClient(client.getFd(), formReply(RPL_CHANNELMODEIS, target + " " + appliedModes, client));
 		return;
 	}
-
-	std::string target = message->parameters[0];
+	
 	std::cout << "Mode command received for target: " << target << std::endl;
 
 	if (message->parameters[1][0] == '+') {
@@ -653,6 +673,6 @@ void CommandHandler::handleCommand(s_msg *message, Client& client) {
 	else if (message->command == "TOPIC")
 		handleTopic(message, client);
 	else
-		_server.sendToClient(client.getFd(), formReply(ERR_UNKNOWNMODE, message->command, client));
+		_server.sendToClient(client.getFd(), formReply(ERR_UNKNOWNCOMMAND, message->command, client));
 }
 

@@ -29,6 +29,7 @@ class Channel {
         bool                    isOperator(int fd) const;
 
 		void					setInviteOnly(bool inviteOnly);
+        bool					isInviteOnly() const;
 
 		bool					hasPassword() const;
 		void					setPassword(const std::string& password);
