@@ -79,7 +79,9 @@ std::string CommandHandler::formReply(int code, Client& client) {
 
 std::string CommandHandler::formReply(int code, std::string nick, std::string command, Client& client) {
     std::ostringstream oss;
-    if (code == ERR_USERONCHANNEL || code == ERR_USERNOTINCHANNEL)
+	if (code == ERR_USERONCHANNEL)
+		oss << ":" << SERVER << " " << code << " " << client.getNickname() << " " << nick << " " << command << _replies[code] << CRLF;
+	else if (code == ERR_USERNOTINCHANNEL)
         oss << ":" << SERVER << " " << code << " " << client.getNickname() << nick << " " << command << _replies[code] << CRLF;
     else
         oss << ":" << SERVER << " " << code << " " << client.getNickname() << _replies[code] << CRLF;
@@ -393,7 +395,8 @@ void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
 }
 
 void CommandHandler::sendModeSuccess(const std::string& mode, Client& client, const std::string& target) {
-		_server.sendToClient(client.getFd(), formReply(RPL_CHANNELMODEIS, target + " " + mode, client));
+		std::string mode_msg = makePrefix(client) + " MODE " + target + " " + mode + CRLF;
+		_server.broadcastToChannel(target, mode_msg, -1);
 	}
 
 void CommandHandler::handleMode(s_msg *message, Client& client) {
@@ -545,6 +548,11 @@ void CommandHandler::handleInvite(s_msg *message, Client& client) {
 	Client* target_client = _server.getClientByNickname(nick_to_invite);
 	if (!target_client) {
 		_server.sendToClient(client.getFd(), formReply(ERR_NOSUCHNICK, nick_to_invite, client));
+		return;
+	}
+
+	if (target_client->getFd() == client.getFd()) {
+		_server.sendToClient(client.getFd(), formReply(ERR_USERONCHANNEL, nick_to_invite, channel_name, client));
 		return;
 	}
 
