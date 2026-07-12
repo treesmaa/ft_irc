@@ -5,16 +5,18 @@ Channel::Channel() {}
 Channel::Channel(const std::string& name) : _name(name), _inviteOnly(false), _hasPassword(false), _password(""),_hasRestrictedTopic(false), _topic(""), _memberLimit(-1) {}
 
 Channel::Channel(const Channel& original)
-    : _name(original._name), _members(original._members), _inviteOnly(original._inviteOnly), _hasPassword(original._hasPassword), _password(original._password), _hasRestrictedTopic(original._hasRestrictedTopic), _topic(original._topic), _memberLimit(original._memberLimit) {}
+    : _name(original._name), _members(original._members), _operators(original._operators), _invitedUsers(original._invitedUsers), _inviteOnly(original._inviteOnly), _hasPassword(original._hasPassword), _password(original._password), _hasRestrictedTopic(original._hasRestrictedTopic), _topic(original._topic), _memberLimit(original._memberLimit) {}
 
 Channel& Channel::operator=(const Channel& other) {
     if (this != &other) {
         _name = other._name;
         _members = other._members;
+		_operators = other._operators;
+		_invitedUsers = other._invitedUsers;
         _inviteOnly = other._inviteOnly;
         _hasPassword = other._hasPassword;
         _password = other._password;
-		 _hasRestrictedTopic = other._hasRestrictedTopic;
+		_hasRestrictedTopic = other._hasRestrictedTopic;
         _topic = other._topic;
         _memberLimit = other._memberLimit;
     }
@@ -57,6 +59,18 @@ void Channel::removeOperator(int fd) {
 
 bool Channel::isOperator(int fd) const {
 	return _operators.find(fd) != _operators.end();
+}
+
+bool Channel::isInvited(int fd) const {
+	return _invitedUsers.find(fd) != _invitedUsers.end();
+}
+
+void Channel::addInvitedUser(int fd) {
+	_invitedUsers.insert(fd);
+}
+
+void Channel::removeInvitedUser(int fd) {
+	_invitedUsers.erase(fd);
 }
 
 void Channel::setInviteOnly(bool inviteOnly) {

@@ -23,6 +23,7 @@ enum Numerics {
 	
 	//Channel modes
 	RPL_CHANNELMODEIS     = 324,
+	RPL_INVITING          = 341,
 
     // General errors
     ERR_NOSUCHNICK        = 401,

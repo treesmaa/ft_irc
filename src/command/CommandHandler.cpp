@@ -29,6 +29,7 @@ std::map<int, std::string> initReplies() {
 
 	// MODE success
 	r[RPL_CHANNELMODEIS]      = "";                                        // 324
+	r[RPL_INVITING]           = " :Inviting";                              // 341
 
     // Channel operator permissions
     r[ERR_CHANOPRIVSNEEDED]   = " :You're not channel operator";           // 482
@@ -307,17 +308,33 @@ void CommandHandler::handleJoin(s_msg *message, Client& client) {
 		}
 
 		std::map<std::string, Channel>& channels = _server.getChannels();
-		if (channels.find(channel_name) == channels.end())
-		{
+		bool new_channel = false;
+
+		if (channels.find(channel_name) == channels.end()) {
 			channels[channel_name] = Channel(channel_name);
 			channels[channel_name].addOperator(client.getFd());
+			new_channel = true;
 		}
 
 		Channel& channel = channels[channel_name];
-		if (channel.hasMember(client.getFd()))
+
+		if (channel.hasMember(client.getFd())) {
+			_server.sendToClient(client.getFd(), formReply(ERR_USERONCHANNEL, channel_name, client));
 			return;
+		}
+
+		if (!new_channel
+			&& channel.isInviteOnly()
+			&& !channel.isInvited(client.getFd())) {
+			_server.sendToClient(
+				client.getFd(),
+				formReply(ERR_INVITEONLYCHAN, channel_name, client)
+			);
+			return;
+		}
 
 		channel.addMember(client.getFd());
+		channel.removeInvitedUser(client.getFd());
         client.getChannels().insert(channel_name);
 
 		std::string join_msg = makePrefix(client) + " JOIN :" + channel_name + CRLF;
@@ -549,9 +566,7 @@ void CommandHandler::handleInvite(s_msg *message, Client& client) {
 	if (!target_client) {
 		_server.sendToClient(client.getFd(), formReply(ERR_NOSUCHNICK, nick_to_invite, client));
 		return;
-	}
-
-	
+	}	
 
 	std::map<std::string, Channel>& channels = _server.getChannels();
 	std::map<std::string, Channel>::iterator it = channels.find(channel_name);
@@ -561,6 +576,11 @@ void CommandHandler::handleInvite(s_msg *message, Client& client) {
 	}
 
 	Channel& thisChannel = it->second;
+	
+	if (!thisChannel.hasMember(client.getFd())) {
+		_server.sendToClient(client.getFd(), formReply(ERR_NOTONCHANNEL, channel_name, client));
+		return;
+	}
 
 	if (!thisChannel.isOperator(client.getFd())) {
 		_server.sendToClient(client.getFd(), formReply(ERR_CHANOPRIVSNEEDED, channel_name, client));
@@ -572,25 +592,11 @@ void CommandHandler::handleInvite(s_msg *message, Client& client) {
 		return;
 	}
 
-	if (!thisChannel.hasMember(client.getFd())) {
-		_server.sendToClient(client.getFd(), formReply(ERR_NOTONCHANNEL, channel_name, client));
-		return;
-	}
+	thisChannel.addInvitedUser(target_client->getFd());
 
-	size_t limit = thisChannel.getMemberLimit();
-	if (thisChannel.hasLimit() && thisChannel.getMembers().size() >= limit) {
-		_server.sendToClient(client.getFd(), formReply(ERR_CHANNELISFULL, channel_name, client));
-		return;
-	}
-
-	thisChannel.addMember(target_client->getFd());
-	target_client->getChannels().insert(channel_name);
-
-	std::string join_msg = makePrefix(*target_client) + " JOIN :" + channel_name + CRLF;
-	std::string invite_msg = makePrefix(client) + " INVITE " + nick_to_invite + " :" + channel_name + CRLF;
-
-	_server.broadcastToChannel(channel_name, join_msg, -1);
+	std::string invite_msg = makePrefix(client) + " INVITE " + nick_to_invite + " " + channel_name + CRLF;
 	_server.sendToClient(target_client->getFd(), invite_msg);
+	_server.sendToClient(client.getFd(), formReply(RPL_INVITING, nick_to_invite, channel_name, client));
 }
 
 void CommandHandler::handleTopic(s_msg *message, Client& client) {

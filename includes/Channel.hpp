@@ -30,6 +30,9 @@ class Channel {
 
 		void					setInviteOnly(bool inviteOnly);
         bool					isInviteOnly() const;
+		bool					isInvited(int fd) const;
+		void					addInvitedUser(int fd);
+		void					removeInvitedUser(int fd);
 
 		bool					hasPassword() const;
 		void					setPassword(const std::string& password);
@@ -45,6 +48,7 @@ class Channel {
         std::string             _name;
         std::set<int>           _members;
 		std::set<int>           _operators;
+		std::set<int>			_invitedUsers;
 		bool					_inviteOnly;
 		bool					_hasPassword;
 		std::string				_password;
