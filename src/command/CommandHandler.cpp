@@ -551,10 +551,7 @@ void CommandHandler::handleInvite(s_msg *message, Client& client) {
 		return;
 	}
 
-	if (target_client->getFd() == client.getFd()) {
-		_server.sendToClient(client.getFd(), formReply(ERR_USERONCHANNEL, nick_to_invite, channel_name, client));
-		return;
-	}
+	
 
 	std::map<std::string, Channel>& channels = _server.getChannels();
 	std::map<std::string, Channel>::iterator it = channels.find(channel_name);
@@ -564,6 +561,17 @@ void CommandHandler::handleInvite(s_msg *message, Client& client) {
 	}
 
 	Channel& thisChannel = it->second;
+
+	if (!thisChannel.isOperator(client.getFd())) {
+		_server.sendToClient(client.getFd(), formReply(ERR_CHANOPRIVSNEEDED, channel_name, client));
+		return;
+	}
+	
+	if (thisChannel.hasMember(target_client->getFd())) {
+		_server.sendToClient(client.getFd(), formReply(ERR_USERONCHANNEL, nick_to_invite, channel_name, client));
+		return;
+	}
+
 	if (!thisChannel.hasMember(client.getFd())) {
 		_server.sendToClient(client.getFd(), formReply(ERR_NOTONCHANNEL, channel_name, client));
 		return;
