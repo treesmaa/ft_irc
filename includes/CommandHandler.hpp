@@ -14,17 +14,27 @@
 #define RPL_YOURHOST	std::string(" 002 ")
 #define RPL_CREATED		std::string(" 003 ")
 #define RPL_MYINFO		std::string(" 004 ")
+//No modes set
+#define NO_MODES_SET	std::string(" No modes set ")
 
 class Server;
 
 enum Numerics {
+	
+	//Channel modes
+	RPL_CHANNELMODEIS     = 324,
+	RPL_INVITING          = 341,
+
     // General errors
     ERR_NOSUCHNICK        = 401,
     ERR_NOSUCHCHANNEL     = 403,
     ERR_CANNOTSENDTOCHAN  = 404,
-    ERR_TOOMANYCHANNELS   = 405,
+    ERR_TOOMANYCHANNELS   = 405,    
     ERR_NORECIPIENT       = 411,
     ERR_NOTEXTTOSEND      = 412,
+
+    // Channel errors
+	ERR_UNKNOWNCOMMAND    = 421,
 
     // Nick / Channel user errors
     ERR_NONICKNAMEGIVEN   = 431,
@@ -48,6 +58,7 @@ enum Numerics {
     ERR_BANNEDFROMCHAN    = 474,
     ERR_BADCHANNELKEY     = 475,
 
+
     // Privileges
     ERR_CHANOPRIVSNEEDED  = 482,
 };
@@ -57,17 +68,26 @@ class CommandHandler {
         CommandHandler(Server& server);
 
         void            handleCommand(s_msg *message, Client& client);
+		
         void            handlePass(s_msg *message, Client& client);
         void            handleNick(s_msg *message, Client& client);
         void            handleUser(s_msg *message, Client& client);
         void            handleQuit(s_msg *message, Client& client);
         void            handleJoin(s_msg *message, Client& client);
         void            handlePrivmsg(s_msg *message, Client& client);
+		
+		void			handleMode(s_msg *message, Client& client);
+		void			handleInvite(s_msg *message, Client& client);
+		void			handleKick(s_msg *message, Client& client);
+		void			handleTopic(s_msg *message, Client& client);
+		
         std::string     formReply(int code, std::string str, Client& client);
         std::string     formReply(int code, Client& client);
         std::string     formReply(int code, std::string nick, std::string command, Client& client);
         void            tryToRegister(Client& client);
         void            welcome(Client& client);
+
+		void 			sendModeSuccess(const std::string& mode, Client& client, const std::string& target);
     private:
         Server&                     _server;
         std::map<int, std::string>  _replies;

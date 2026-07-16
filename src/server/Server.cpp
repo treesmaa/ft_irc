@@ -42,6 +42,8 @@ Client* Server::getClientByNickname(const std::string& nickname) {
 }
 
 void Server::sendToClient(int fd, const std::string& message) {
+    if (fd < 0)
+        return;
     if (send(fd, message.c_str(), message.size(), 0) == -1)
         std::cerr << "Send error" << std::endl;
 }
@@ -205,7 +207,9 @@ void Server::acceptNewClient() {
 
 void Server::disconnectClient(Client & client, std::string reason) {
     int client_fd = client.getFd();
-    std::cout << std::left << std::setw(14) << "[disconnect]" << " fd=" << client_fd << " host=" << _clients[client_fd].getHost() << " nickname=" << _clients[client_fd].getNickname() << " reason=" << reason << std::endl;
+    std::cout << std::left << std::setw(14) << "[disconnect]" << " fd=" << client_fd << " host=" << client.getHost() << " nickname=" << client.getNickname() << " reason=" << reason << std::endl;
+	if (client_fd != -1)
+		sendToClient(client_fd, reason + CRLF);
     removeClient(client_fd);
 }
 
@@ -283,7 +287,13 @@ void Server::boot() {
 					std::string input;
 					std::getline(std::cin, input);
 
-					if (input == "QUIT" || input == "quit" || input == "exit" || input == "EXIT") {
+					if (input == "QUIT" || input == "quit" || input == "exit" || input == "EXIT") {						
+                        for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ) {
+                            Client &client = it->second;							
+                            ++it;
+							if (client.getFd() != -1)
+                            	disconnectClient(client, "Server shutdown, goodbye!");
+						}
 						std::cout << "Server shutdown requested." << std::endl;
 						g_stop = true;
 					}
