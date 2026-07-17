@@ -74,6 +74,7 @@ class CommandHandler {
         void            handleUser(s_msg *message, Client& client);
         void            handleQuit(s_msg *message, Client& client);
         void            handleJoin(s_msg *message, Client& client);
+        void            handlePart(s_msg *message, Client& client);
         void            handlePrivmsg(s_msg *message, Client& client);
 		
 		void			handleMode(s_msg *message, Client& client);
