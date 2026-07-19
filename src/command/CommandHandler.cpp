@@ -425,6 +425,9 @@ void CommandHandler::handlePart(s_msg *message, Client& client) {
 		_server.broadcastToChannel(channel_name, part_msg, -1);
 		channels[channel_name].removeMember(client.getFd());
 		client.getChannels().erase(channel_name);
+
+		if (channels[channel_name].isEmpty())
+			channels.erase(channel_name);
 	}
 
 }
