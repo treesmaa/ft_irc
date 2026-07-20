@@ -11,7 +11,7 @@ void debugPrint(const std::string& tag, int fd, const std::string& s)
         if (c == '\r')
             std::cout << "\\r";
         else if (c == '\n')
-            std::cout << "\\n\n" << tag << "fd=" << fd << " ";
+            std::cout << "\\n";
         else if (c < 32 || c == 127)
             std::cout << "<" << (int)c << ">";
         else
