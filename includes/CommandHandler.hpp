@@ -83,6 +83,7 @@ class CommandHandler {
 		void			handleKick(s_msg *message, Client& client);
 		void			handleTopic(s_msg *message, Client& client);
         void            handlePing(s_msg *message, Client& client);
+        void            handleCAP(s_msg *message, Client& client);
 		
         std::string     formReply(int code, std::string str, Client& client);
         std::string     formReply(int code, Client& client);

@@ -804,6 +804,12 @@ void CommandHandler::handlePing(s_msg *message, Client& client) {
 	_server.sendToClient(client.getFd(), "PONG " + message->parameters[0] + CRLF);
 }
 
+void CommandHandler::handleCAP(s_msg *message, Client& client) {
+	//no parameters?
+	if (message->parameters[0] == "LS")
+		_server.sendToClient(client.getFd(), ":" SERVER " CAP * LS :" CRLF);
+}
+
 void CommandHandler::handleCommand(s_msg *message, Client& client) {
     if (message->command == "PASS")
         handlePass(message, client);
@@ -829,6 +835,8 @@ void CommandHandler::handleCommand(s_msg *message, Client& client) {
 		handleTopic(message, client);
 	else if (message->command == "PING")
 		handlePing(message, client);
+	else if (message->command == "CAP")
+		handleCAP(message, client);
 	else
 		_server.sendToClient(client.getFd(), formReply(ERR_UNKNOWNCOMMAND, message->command, client));
 }
