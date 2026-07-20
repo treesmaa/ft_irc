@@ -6,13 +6,13 @@
 
 #ifdef DEBUG
 
-void debugPrint(const std::string& s);
+void debugPrint(const std::string& tag, int fd, const std::string& s);
 
-#define DEBUG_PRINT(s)   debugPrint(s)
+#define DEBUG_PRINT(tag, fd, s)   debugPrint(tag, fd, s)
 
 #else
 
-#define DEBUG_PRINT(s)   ((void)0)
+#define DEBUG_PRINT(tag, fd, s)   ((void)0)
 
 #endif
 #endif
