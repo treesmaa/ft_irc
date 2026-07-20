@@ -801,7 +801,7 @@ void CommandHandler::handlePing(s_msg *message, Client& client) {
         _server.sendToClient(client.getFd(), formReply(ERR_NOORIGIN, client));
         return;
     }
-	_server.sendToClient(client.getFd(), "PONG :" + message->parameters[0] + CRLF);
+	_server.sendToClient(client.getFd(), "PONG " + message->parameters[0] + CRLF);
 }
 
 void CommandHandler::handleCommand(s_msg *message, Client& client) {
