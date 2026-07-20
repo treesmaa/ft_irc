@@ -300,7 +300,7 @@ void CommandHandler::handleJoin(s_msg *message, Client& client) {
 	std::vector<std::string> keys;
 
 	if (message->parameters.size() > 1)
-	keys = splitParameters(message->parameters[1]);
+		keys = splitParameters(message->parameters[1]);
 
 	for (size_t i = 0; i < channel_names.size(); ++i) {
 		std::string channel_name = channel_names[i];
@@ -386,6 +386,50 @@ void CommandHandler::handleJoin(s_msg *message, Client& client) {
 		_server.sendToClient(client.getFd(), rpl_names);
 		_server.sendToClient(client.getFd(), rpl_end);
 	}
+}
+
+void CommandHandler::handlePart(s_msg *message, Client& client) {
+	if (!client.isRegistered()) {
+        _server.sendToClient(client.getFd(), formReply(ERR_NOTREGISTERED, client));
+        return;
+    }
+    if (message->parameters.empty()) {
+        _server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
+        return;
+    }
+	std::vector<std::string> channel_names = splitParameters(message->parameters[0]);
+
+	for (size_t i = 0; i < channel_names.size(); ++i) {
+		std::string channel_name = channel_names[i];
+
+		if (!isChannelName(channel_name)) {
+			_server.sendToClient(
+				client.getFd(),
+				formReply(ERR_NOSUCHCHANNEL, channel_name, client)
+			);
+			continue;
+		}
+
+		std::map<std::string, Channel>& channels = _server.getChannels();
+		std::map<std::string, Channel>::iterator it = channels.find(channel_name);
+		if (it == channels.end()) {
+			_server.sendToClient(client.getFd(), formReply(ERR_NOTONCHANNEL, message->command, client));
+			continue;
+		}
+		if (!channels[channel_name].hasMember(client.getFd())) {
+			_server.sendToClient(client.getFd(), formReply(ERR_NOTONCHANNEL, message->command, client));
+			continue;
+		}
+
+		std::string part_msg = makePrefix(client) + " PART " + channel_name + CRLF;
+		_server.broadcastToChannel(channel_name, part_msg, -1);
+		channels[channel_name].removeMember(client.getFd());
+		client.getChannels().erase(channel_name);
+
+		if (channels[channel_name].isEmpty())
+			channels.erase(channel_name);
+	}
+
 }
 
 void CommandHandler::handlePrivmsg(s_msg *message, Client& client) {
@@ -750,6 +794,7 @@ void CommandHandler::handleKick(s_msg *message, Client& client) {
 	_server.broadcastToChannel(channel_name, kick_msg, -1);
 }
 
+
 void CommandHandler::handleCommand(s_msg *message, Client& client) {
     if (message->command == "PASS")
         handlePass(message, client);
@@ -761,6 +806,8 @@ void CommandHandler::handleCommand(s_msg *message, Client& client) {
         handleQuit(message, client);
     else if (message->command == "JOIN")
         handleJoin(message, client);
+	else if (message->command == "PART")
+		handlePart(message, client);
     else if (message->command == "PRIVMSG" || message->command == "NOTICE")
         handlePrivmsg(message, client);
 	else if (message->command == "MODE")
