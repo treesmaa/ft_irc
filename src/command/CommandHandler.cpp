@@ -805,7 +805,10 @@ void CommandHandler::handlePing(s_msg *message, Client& client) {
 }
 
 void CommandHandler::handleCAP(s_msg *message, Client& client) {
-	//no parameters?
+	if (message->parameters.empty()) {
+		_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
+		return;
+	}
 	if (message->parameters[0] == "LS")
 		_server.sendToClient(client.getFd(), ":" SERVER " CAP * LS :" CRLF);
 }
