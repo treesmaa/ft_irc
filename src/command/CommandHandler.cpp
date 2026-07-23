@@ -4,6 +4,8 @@
 //it's just to show which replies take additional parameters.
 std::map<int, std::string> initReplies() {
     std::map<int, std::string> r;
+	// Ping
+	r[ERR_NOORIGIN]			= " :No origin specified";					//409
 
     // Connection / Registration
     r[ERR_NOTREGISTERED]      = " :You have not registered";                  // 451
@@ -794,6 +796,22 @@ void CommandHandler::handleKick(s_msg *message, Client& client) {
 	_server.broadcastToChannel(channel_name, kick_msg, -1);
 }
 
+void CommandHandler::handlePing(s_msg *message, Client& client) {
+    if (message->parameters.empty()) {
+        _server.sendToClient(client.getFd(), formReply(ERR_NOORIGIN, client));
+        return;
+    }
+	_server.sendToClient(client.getFd(), "PONG " + message->parameters[0] + CRLF);
+}
+
+void CommandHandler::handleCAP(s_msg *message, Client& client) {
+	if (message->parameters.empty()) {
+		_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
+		return;
+	}
+	if (message->parameters[0] == "LS")
+		_server.sendToClient(client.getFd(), ":" SERVER " CAP * LS :" CRLF);
+}
 
 void CommandHandler::handleCommand(s_msg *message, Client& client) {
     if (message->command == "PASS")
@@ -818,6 +836,10 @@ void CommandHandler::handleCommand(s_msg *message, Client& client) {
 		handleKick(message, client);
 	else if (message->command == "TOPIC")
 		handleTopic(message, client);
+	else if (message->command == "PING")
+		handlePing(message, client);
+	else if (message->command == "CAP")
+		handleCAP(message, client);
 	else
 		_server.sendToClient(client.getFd(), formReply(ERR_UNKNOWNCOMMAND, message->command, client));
 }

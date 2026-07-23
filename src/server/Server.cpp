@@ -44,6 +44,7 @@ Client* Server::getClientByNickname(const std::string& nickname) {
 void Server::sendToClient(int fd, const std::string& message) {
     if (fd < 0)
         return;
+    DEBUG_PRINT("[send] ", fd, message);
     if (send(fd, message.c_str(), message.size(), 0) == -1)
         std::cerr << "Send error" << std::endl;
 }
@@ -241,7 +242,7 @@ int Server::readClientData(int idx) {
         return -1;
     }
 
-    DEBUG_PRINT(std::string(buf, nbytes));
+    DEBUG_PRINT("[recv] ", client_fd, std::string(buf, nbytes));
 
     _clients[client_fd].getBuffer().append(buf, nbytes);
     size_t pos = 0;
