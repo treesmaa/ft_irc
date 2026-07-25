@@ -47,6 +47,8 @@ void Channel::addMember(int fd) {
 
 void Channel::removeMember(int fd) {
     _members.erase(fd);
+    _operators.erase(fd);
+    _invitedUsers.erase(fd); 
 }
 
 void Channel::addOperator(int fd) {
