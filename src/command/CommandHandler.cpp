@@ -577,7 +577,7 @@ void CommandHandler::handleMode(s_msg *message, Client& client) {
 				_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
 				return;
 			}
-			int limit = std::atoi(message->parameters[2].c_str());
+			int limit = std::atoi(message->parameters[2].c_str()); // handle invalid input (non-integer) if necessary
 			if (limit <= 0) {
 				_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
 				return;
@@ -840,5 +840,5 @@ void CommandHandler::handleCommand(s_msg *message, Client& client) {
 		handleCAP(message, client);
 	else
 		_server.sendToClient(client.getFd(), formReply(ERR_UNKNOWNCOMMAND, message->command, client));
-}
+} //add "WHO" "WHOIS"
 
