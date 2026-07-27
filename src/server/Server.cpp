@@ -102,23 +102,6 @@ void Server::removeClient(int fd) {
     close(fd);
 }
 
-/* void Server::printNewClient(struct sockaddr_storage client_addr) const {
-        char ipstr[INET6_ADDRSTRLEN];
-        const char *printable_addr;
-        if (client_addr.ss_family == AF_INET) {
-            struct sockaddr_in *s = (struct sockaddr_in *)&client_addr;
-            printable_addr = inet_ntop(client_addr.ss_family, &s->sin_addr, ipstr, sizeof(ipstr));
-        }
-        else {
-            struct sockaddr_in6 *s = (struct sockaddr_in6 *)&client_addr;
-            printable_addr = inet_ntop(client_addr.ss_family, &s->sin6_addr, ipstr, sizeof(ipstr));
-        }
-        if (!printable_addr)
-            std::cerr << "Error: inet_ntop() failed: " << strerror(errno) << std::endl;
-        else
-            std::cout << "New connection from " << ipstr << std::endl;//can only be printed if success
-} */
-
 void Server::serverSocketSetup() {
     struct addrinfo hints;
     struct addrinfo *servinfo;
