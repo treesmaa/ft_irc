@@ -44,6 +44,8 @@ std::map<int, std::string> initReplies() {
 
     // MODE
     r[ERR_UNKNOWNMODE]        = " :No such mode modifier";            // 472
+	r[ERR_NOTNUMBER]          = " :Parameter is not a number";            // 696
+	r[ERR_OVERFLOW]           = " :Parameter is too large";            // 697
 
     // INVITE
     r[ERR_NOTONCHANNEL]       = " :You're not on that channel";            // 442
@@ -577,9 +579,16 @@ void CommandHandler::handleMode(s_msg *message, Client& client) {
 				_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
 				return;
 			}
-			int limit = std::atoi(message->parameters[2].c_str()); // handle invalid input (non-integer) if necessary
+			std::string limit_str = message->parameters[2];
+			for (ulong i = 0; i < limit_str.size(); ++i) {
+				if (!std::isdigit(limit_str[i])) {
+					_server.sendToClient(client.getFd(), formReply(ERR_NOTNUMBER, message->command, client));
+					return;
+				}
+			}
+			int limit = std::atoi(limit_str.c_str());
 			if (limit <= 0) {
-				_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
+				_server.sendToClient(client.getFd(), formReply(ERR_OVERFLOW, message->command, client));
 				return;
 			}
 			thisChannel.setMemberLimit(limit);

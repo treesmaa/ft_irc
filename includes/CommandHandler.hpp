@@ -22,6 +22,7 @@ class Server;
 enum Numerics {
 	//Ping
     ERR_NOORIGIN          = 409,
+
 	//Channel modes
 	RPL_CHANNELMODEIS     = 324,
 	RPL_INVITING          = 341,
@@ -58,6 +59,10 @@ enum Numerics {
     ERR_INVITEONLYCHAN    = 473,
     ERR_BANNEDFROMCHAN    = 474,
     ERR_BADCHANNELKEY     = 475,
+
+	// Limit errors
+	ERR_NOTNUMBER          = 696,
+	ERR_OVERFLOW           = 697,
 
 
     // Privileges
