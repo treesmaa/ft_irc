@@ -527,12 +527,7 @@ void CommandHandler::handleMode(s_msg *message, Client& client) {
     }
 
     Channel& thisChannel = it->second;
-	if (!thisChannel.isOperator(client.getFd())) {
-		_server.sendToClient(client.getFd(), formReply(ERR_CHANOPRIVSNEEDED, message->parameters[0], client));
-		return;
-	}
 
-	
 	std::string appliedModes = getChannelModes(thisChannel);
 	
 	if (message->parameters.size() < 2) {
@@ -541,6 +536,11 @@ void CommandHandler::handleMode(s_msg *message, Client& client) {
 		return;
 		}
 		_server.sendToClient(client.getFd(), formReply(RPL_CHANNELMODEIS, target + " " + appliedModes, client));
+		return;
+	}
+
+	if (!thisChannel.isOperator(client.getFd())) {
+		_server.sendToClient(client.getFd(), formReply(ERR_CHANOPRIVSNEEDED, message->parameters[0], client));
 		return;
 	}
 
