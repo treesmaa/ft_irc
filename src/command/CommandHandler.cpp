@@ -827,7 +827,7 @@ void CommandHandler::handleCommand(s_msg *message, Client& client) {
     else if (message->command == "PRIVMSG" || message->command == "NOTICE")
         handlePrivmsg(message, client);
 	else if (message->command == "MODE")
-		handleMode(message, client);
+		handleMode(message, client); // multiple modes can be applied at once, and mode info specifiers
 	else if (message->command == "INVITE")
 		handleInvite(message, client);
 	else if (message->command == "KICK")
