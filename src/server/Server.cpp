@@ -6,7 +6,7 @@ Server::Server(int port, char *password)
     :   _port(port),
         _password(password),
         _server_fd(-1),
-        _creation_date("Mon May 15 2026") {}
+        _creation_date(getCurrentDate()) {}
 
 Server::~Server() {
     if (_server_fd != -1)
@@ -39,6 +39,15 @@ Client* Server::getClientByNickname(const std::string& nickname) {
             return &(it->second);
     }
     return NULL;
+}
+
+std::string Server::getCurrentDate() const {
+	time_t now = time(0);
+	struct tm tstruct;
+	char buf[80];
+	tstruct = *localtime(&now);
+	strftime(buf, sizeof(buf), "%Y-%m-%d %X", &tstruct);
+	return buf;
 }
 
 void Server::sendToClient(int fd, const std::string& message) {
@@ -228,7 +237,7 @@ int Server::readClientData(int idx) {
     while ((pos = _clients[client_fd].getBuffer().find("\r\n")) != std::string::npos) {
         std::string line = _clients[client_fd].getBuffer().substr(0, pos + 2);
         _clients[client_fd].getBuffer().erase(0, pos + 2);
-        if (line.size() > 512)//message cannot exceed 512 characters (incl. CRLF ("\r\n")) per RFC
+        if (line.size() > 512) //message cannot exceed 512 characters (incl. CRLF ("\r\n")) per RFC
             line = line.substr(0, 510) + CRLF;
         handleMessage(line, _clients[client_fd]);
     }

@@ -40,6 +40,7 @@ class Server {
         std::map<std::string, Channel>& getChannels();
         Client*                     getClientByNickname(const std::string& nickname);
         std::string				    getCreationDate() const;
+		std::string				    getCurrentDate() const;
 
 
         void	boot(void);
