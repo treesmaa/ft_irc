@@ -209,8 +209,6 @@ void Server::acceptNewClient() {
 void Server::disconnectClient(Client & client, std::string reason) {
     int client_fd = client.getFd();
     std::cout << std::left << std::setw(14) << "[disconnect]" << " fd=" << client_fd << " host=" << client.getHost() << " nickname=" << client.getNickname() << " reason=" << reason << std::endl;
-	if (client_fd != -1)
-		sendToClient(client_fd, reason + CRLF);
     removeClient(client_fd);
 }
 
@@ -231,9 +229,7 @@ int Server::readClientData(int idx) {
     int nbytes = recv(client_fd, buf, sizeof(buf), 0);
 
     if (nbytes < 0) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK)
-            return 0;
-        else if (errno == EINTR)
+        if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
             return 0;
         std::cerr << "Error: recv(): " << strerror(errno) << std::endl;
         return -1;
