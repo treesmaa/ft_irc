@@ -32,6 +32,8 @@ std::map<int, std::string> initReplies() {
 	// MODE success
 	r[RPL_CHANNELMODEIS]      = "";                                        // 324
 	r[RPL_INVITING]           = " :Inviting";                              // 341
+	r[RPL_WHOREPLY]			 = " :Who reply";							  // 352
+	r[RPL_WHOISREPLY]		 = " :Whois reply";							  // 311
 
     // Channel operator permissions
     r[ERR_CHANOPRIVSNEEDED]   = " :You're not channel operator";           // 482
@@ -214,6 +216,19 @@ void CommandHandler::handleUser(s_msg *message, Client& client) {
 
 static std::string makePrefix(Client& client) {
     return ":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHost();
+}
+
+static std::string makeUserReply(int code, const Client& requester, const Client& target) {
+	std::ostringstream oss;
+	std::string suffix;
+	if (code == RPL_WHOREPLY)
+		suffix = " :Who reply";
+	else if (code == RPL_WHOISREPLY)
+		suffix = " :Whois reply";
+	oss << ":" << SERVER << " " << code << " " << requester.getNickname()
+		<< " " << target.getNickname() << "!" << target.getUsername()
+		<< "@" << target.getHost() << suffix << CRLF;
+	return oss.str();
 }
 
 void CommandHandler::handleQuit(s_msg* message, Client& client) {
@@ -820,6 +835,52 @@ void CommandHandler::handleCAP(s_msg *message, Client& client) {
 		_server.sendToClient(client.getFd(), ":" SERVER " CAP * LS :" CRLF);
 }
 
+void CommandHandler::handleWho(s_msg *message, Client& client) {
+	if (!client.isRegistered()) {
+		_server.sendToClient(client.getFd(), formReply(ERR_NOTREGISTERED, client));
+		return;
+	}
+	if (message->parameters.empty()) {
+		_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
+		return;
+	}
+	std::string target = message->parameters[0];
+	std::map<std::string, Channel>& channels = _server.getChannels();
+	std::map<std::string, Channel>::iterator it = channels.find(target);
+	if (it == channels.end()) {
+		_server.sendToClient(client.getFd(), formReply(ERR_NOSUCHCHANNEL, target, client));
+		return;
+	}
+
+	const std::set<int>& members = it->second.getMembers();
+	std::map<int, Client> clients = _server.getClients();
+	for (std::set<int>::const_iterator member_it = members.begin(); member_it != members.end(); ++member_it) {
+		std::map<int, Client>::iterator target_client = clients.find(*member_it);
+		if (target_client == clients.end())
+			continue;
+		_server.sendToClient(client.getFd(), makeUserReply(RPL_WHOREPLY, client, target_client->second));
+	}
+}
+
+
+void CommandHandler::handleWhois(s_msg *message, Client& client) {
+	if (!client.isRegistered()) {
+		_server.sendToClient(client.getFd(), formReply(ERR_NOTREGISTERED, client));
+		return;
+	}
+	if (message->parameters.empty()) {
+		_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
+		return;
+	}
+	Client* target_client = _server.getClientByNickname(message->parameters[0]);
+	if (!target_client) {
+		_server.sendToClient(client.getFd(), formReply(ERR_NOSUCHNICK, message->parameters[0], client));
+		return;
+	}
+
+	_server.sendToClient(client.getFd(), makeUserReply(RPL_WHOISREPLY, client, *target_client));
+}
+
 void CommandHandler::handleCommand(s_msg *message, Client& client) {
     if (message->command == "PASS")
         handlePass(message, client);
@@ -847,7 +908,11 @@ void CommandHandler::handleCommand(s_msg *message, Client& client) {
 		handlePing(message, client);
 	else if (message->command == "CAP")
 		handleCAP(message, client);
+	else if (message->command == "WHO")
+		handleWho(message, client);
+	else if (message->command == "WHOIS")
+		handleWhois(message, client);
 	else
 		_server.sendToClient(client.getFd(), formReply(ERR_UNKNOWNCOMMAND, message->command, client));
-} //add "WHO" "WHOIS"
+}
 

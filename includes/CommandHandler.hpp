@@ -26,6 +26,8 @@ enum Numerics {
 	//Channel modes
 	RPL_CHANNELMODEIS     = 324,
 	RPL_INVITING          = 341,
+	RPL_WHOREPLY			 = 352,	
+	RPL_WHOISREPLY		 = 311,
 
     // General errors
     ERR_NOSUCHNICK        = 401,
@@ -89,7 +91,10 @@ class CommandHandler {
 		void			handleTopic(s_msg *message, Client& client);
         void            handlePing(s_msg *message, Client& client);
         void            handleCAP(s_msg *message, Client& client);
-		
+
+		void 			handleWho(s_msg *message, Client& client);
+		void 		  	handleWhois(s_msg *message, Client& client);
+
         std::string     formReply(int code, std::string str, Client& client);
         std::string     formReply(int code, Client& client);
         std::string     formReply(int code, std::string nick, std::string command, Client& client);
