@@ -543,8 +543,6 @@ void CommandHandler::handleMode(s_msg *message, Client& client) {
 		_server.sendToClient(client.getFd(), formReply(RPL_CHANNELMODEIS, target + " " + appliedModes, client));
 		return;
 	}
-	
-	std::cout << "Mode command received for target: " << target << std::endl;
 
 	if (message->parameters[1][0] == '+') {
 		if (message->parameters[1].find('o') != std::string::npos) {
