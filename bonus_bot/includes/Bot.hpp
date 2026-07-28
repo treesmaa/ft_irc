@@ -1,6 +1,10 @@
 #ifndef BOT_HPP
 #define BOT_HPP
 
+#include <signal.h>
+
+extern volatile sig_atomic_t g_stop; // defined in main.cpp
+
 #include <string>
 
 // RFC 2812: NICK < 10 chars! else 432 ERR_ERRONEUSNICKNAME
@@ -22,6 +26,9 @@ class Bot {
 
         // Operators
         Bot& operator=( const Bot& );
+
+        // General Methods
+        int monitor(); // Essiantially the main loop
 
         // Getters
         int exit( void );
