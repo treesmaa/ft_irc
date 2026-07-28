@@ -3,8 +3,9 @@
 
 #include <string>
 
+// RFC 2812: NICK < 10 chars! else 432 ERR_ERRONEUSNICKNAME
 #ifndef BOT_NICK
-# define BOT_NICK "kombot"
+# define BOT_NICK "marvin"
 #endif // ! BOT_NICK
 
 #ifndef BOT_USER
