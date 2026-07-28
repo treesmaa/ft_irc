@@ -34,8 +34,8 @@ int main(int argc, char **argv) {
         signal(SIGTERM, signalHandler);
         signal(SIGPIPE, SIG_IGN);
 
-        Bot bot;
-        bot.connect(argv[1], convertPort(argv[2]), argv[3]);
+        Bot bot(argv[1], convertPort(argv[2]), argv[3]);
+        bot.monitor(); // -> Main loop of the bot
         return (bot.exit());
     }
     catch(const std::exception& e) {

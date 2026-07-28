@@ -16,11 +16,10 @@ class Bot {
     public:
         // Constructors & Destructors
         Bot( void );
+        Bot( const std::string& network, const int& port, const std::string& password );
         Bot( const Bot& );
         ~Bot( void );
 
-        // General Methods
-        bool connect( const std::string& network, const int& port, const std::string& password ); // TODO: Add optional channel
         // Operators
         Bot& operator=( const Bot& );
 
@@ -29,6 +28,7 @@ class Bot {
 
         // Setters
     private:
+        // Private Variables
         int _exit; // to retreive exit status
 };
 
