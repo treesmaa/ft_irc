@@ -8,7 +8,7 @@
 #endif // ! BOT_NICK
 
 #ifndef BOT_USER
-# define BOT_USER "little botanic"
+# define BOT_USER "Zaphod Beeblebot"
 #endif // ! BOT_USER
 
 class Bot {
