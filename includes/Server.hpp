@@ -27,7 +27,8 @@
 #include "CommandHandler.hpp"
 #include "Debug.hpp"
 
-#define MAX_LENGTH 512
+#define MAX_RECV 512
+#define MAX_BUFFER 4096
 
 class Server {
     public:

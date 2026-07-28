@@ -215,7 +215,7 @@ void Server::handleMessage(std::string& line, Client& client) {
 }
 
 int Server::readClientData(int idx) {
-    char buf[MAX_LENGTH];
+    char buf[MAX_RECV];
     int client_fd = _pfds[idx].fd;
 
     int nbytes = recv(client_fd, buf, sizeof(buf), 0);
@@ -233,12 +233,15 @@ int Server::readClientData(int idx) {
     DEBUG_PRINT("[recv] ", client_fd, std::string(buf, nbytes));
 
     _clients[client_fd].getBuffer().append(buf, nbytes);
+    if (_clients[client_fd].getBuffer().size() > MAX_BUFFER)
+        return -1;
+
     size_t pos = 0;
     while ((pos = _clients[client_fd].getBuffer().find("\r\n")) != std::string::npos) {
         std::string line = _clients[client_fd].getBuffer().substr(0, pos + 2);
         _clients[client_fd].getBuffer().erase(0, pos + 2);
         if (line.size() > 512) //message cannot exceed 512 characters (incl. CRLF ("\r\n")) per RFC
-            line = line.substr(0, 510) + CRLF;
+            return -1;
         handleMessage(line, _clients[client_fd]);
     }
     return 0;
