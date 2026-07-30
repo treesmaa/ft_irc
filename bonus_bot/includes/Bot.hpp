@@ -20,7 +20,6 @@ class Bot {
     public:
         // Constructors & Destructors
         Bot( void );
-        Bot( const std::string& network, const int& port, const std::string& password );
         Bot( const Bot& );
         ~Bot( void );
 
@@ -28,6 +27,7 @@ class Bot {
         Bot& operator=( const Bot& );
 
         // General Methods
+        int connect( const std::string& network, const int& port, const std::string& password );
         int run(); // Essiantially the main loop
 
         // Getters
@@ -36,7 +36,8 @@ class Bot {
         // Setters
     private:
         // Private Variables
-        int _exit; // to retreive exit status
+        int     _exit;      // to retreive exit status
+        bool    _connected;
 };
 
 #endif // ! BOT_HPP
