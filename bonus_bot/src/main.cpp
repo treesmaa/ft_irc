@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
         signal(SIGPIPE, SIG_IGN);
 
         Bot bot;
-        bot.connect(argv[1], argv[2], argv[3]);
+        bot.connect(argv[1], argv[2]); // -> no check, throws
         return (bot.run());
     }
     catch(const std::exception& e) {

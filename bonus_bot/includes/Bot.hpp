@@ -27,7 +27,7 @@ class Bot {
         Bot& operator=( const Bot& );
 
         // General Methods
-        int connect( const std::string& network, const std::string& port, const std::string& password );
+        void connect( const std::string& network, const std::string& port);
         int run(); // Essiantially the main loop
 
         // Getters
@@ -37,10 +37,11 @@ class Bot {
     private:
         // Private Variables
         int     _exit;      // to retreive exit status
+        int     _serverfd;  // fd of the irc server we connect to
         bool    _connected;
 
         // Private Member Functions
-        int convertPort(char *str);
+        const char* checkPort(const char *str);
 };
 
 #endif // ! BOT_HPP
