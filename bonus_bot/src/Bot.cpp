@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
+#include <string>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -76,16 +77,18 @@ void Bot::connect( const std::string& network, const std::string& port) {
     _connected = true;
 }
 
-
-
-
-
+void Bot::login( const std::string& password ) {
+    sendToServer("PASS " + password + CRLF);
+    sendToServer("NICK " + std::string(BOT_NICK) + CRLF);
+    sendToServer("USER " + std::string(BOT_USER) + " 0 * :Whatever" + CRLF);
+}
 
 int Bot::run( void ) {
     while (!g_stop && _connected) {
-        sleep(1);
-        sendToServer("PASS hello\r\nNICK andi\r\nUSER username 0 * :Your Real Name\r\n");
+        // TODO: add poll here instead
         readFromServer();
+        // -> handle what was read
+        sleep(1); // TODO: remove once we use poll
     }
     return _exit;
 }
@@ -128,7 +131,6 @@ void Bot::readFromServer( void ) {
         _buf.erase(0, pos + 2);
         if (line.size() > 512) //message cannot exceed 512 characters (incl. CRLF ("\r\n")) per RFC
             line = line.substr(0, 510) + CRLF;
-        std::cout << line << std::endl;
-        // handleMessage(line, _clients[_serverfd]);
+        std::cout << line;
     }
 }

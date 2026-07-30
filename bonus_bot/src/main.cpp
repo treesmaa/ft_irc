@@ -24,6 +24,7 @@ int main(int argc, char **argv) {
 
         Bot bot;
         bot.connect(argv[1], argv[2]); // -> no check, throws
+        bot.login( argv[3] );
         return (bot.run());
     }
     catch(const std::exception& e) {

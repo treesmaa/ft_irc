@@ -12,7 +12,7 @@ extern volatile sig_atomic_t g_stop; // defined in main.cpp
 #endif // ! BOT_NICK
 
 #ifndef BOT_USER
-# define BOT_USER "Zaphod Beeblebot"
+# define BOT_USER "Zaphod_Beeblebot"
 #endif // ! BOT_USER
 
 #ifndef MAX_LENGTH
@@ -33,6 +33,7 @@ class Bot {
 
         // General Methods
         void connect( const std::string& network, const std::string& port);
+        void login( const std::string& password );
         int run(); // Essiantially the main loop
 
         // Getters
