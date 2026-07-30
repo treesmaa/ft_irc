@@ -19,7 +19,7 @@ Bot& Bot::operator=( const Bot& other ) {
     return (*this);
 }
 
-int Bot::monitor( void ) {
+int Bot::run( void ) {
     while (!g_stop) {
         sleep(1);
         std::cout << "marvin: I am depressed :(" << std::endl;

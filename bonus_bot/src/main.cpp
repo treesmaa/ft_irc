@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
         signal(SIGPIPE, SIG_IGN);
 
         Bot bot(argv[1], convertPort(argv[2]), argv[3]);
-        return (bot.monitor());
+        return (bot.run());
     }
     catch(const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

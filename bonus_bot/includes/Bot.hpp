@@ -28,7 +28,7 @@ class Bot {
         Bot& operator=( const Bot& );
 
         // General Methods
-        int monitor(); // Essiantially the main loop
+        int run(); // Essiantially the main loop
 
         // Getters
         int exit( void );
