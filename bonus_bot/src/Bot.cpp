@@ -1,6 +1,7 @@
 #include "Bot.hpp"
 
 #include <arpa/inet.h>
+#include <cerrno>
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
@@ -75,18 +76,59 @@ void Bot::connect( const std::string& network, const std::string& port) {
     _connected = true;
 }
 
+
+
+
+
+
 int Bot::run( void ) {
     while (!g_stop && _connected) {
         sleep(1);
-        std::cout << "marvin: I am depressed :(" << std::endl;
+        sendToServer("PASS hello\r\nNICK andi\r\nUSER username 0 * :Your Real Name\r\n");
+        readFromServer();
     }
     return _exit;
 }
 
+// ==============================================================================================
 // Private Member Functions
 const char* Bot::checkPort(const char *str) {
     int asInt = std::atoi(str);
     if (asInt < 1024 || asInt > 65535)
         throw std::runtime_error("invalid port number");
     return str;
+}
+
+void Bot::sendToServer(const std::string& message) {
+    if (_serverfd < 0)
+        return;
+    if (send(_serverfd, message.c_str(), message.size(), 0) == -1)
+        std::cerr << "Send error" << std::endl;
+}
+
+void Bot::readFromServer( void ) {
+    char buf[MAX_LENGTH];
+
+    int nbytes = recv(_serverfd, buf, sizeof(buf), 0);
+
+    if (nbytes < 0) {
+        if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
+            return;
+        std::cerr << "Error: recv(): " << strerror(errno) << std::endl;
+            throw std::runtime_error(std::string("Error: recv(): ") + strerror(errno)); // TODO: Ask if throw is fine here, assume i can kill server if receive fails
+    }
+    else if (nbytes == 0) {
+        throw std::runtime_error(std::string("Error: recv(): ") + strerror(errno)); // TODO: Ask if throw is fine here, assume i can kill server if receive fails
+    }
+
+    _buf.append(buf, nbytes);
+    size_t pos = 0;
+    while ((pos = _buf.find("\r\n")) != std::string::npos) {
+        std::string line = _buf.substr(0, pos + 2);
+        _buf.erase(0, pos + 2);
+        if (line.size() > 512) //message cannot exceed 512 characters (incl. CRLF ("\r\n")) per RFC
+            line = line.substr(0, 510) + CRLF;
+        std::cout << line << std::endl;
+        // handleMessage(line, _clients[_serverfd]);
+    }
 }

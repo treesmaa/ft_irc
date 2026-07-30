@@ -2,10 +2,9 @@
 #define BOT_HPP
 
 #include <signal.h>
+#include <string>
 
 extern volatile sig_atomic_t g_stop; // defined in main.cpp
-
-#include <string>
 
 // RFC 2812: NICK < 10 chars! else 432 ERR_ERRONEUSNICKNAME
 #ifndef BOT_NICK
@@ -15,6 +14,12 @@ extern volatile sig_atomic_t g_stop; // defined in main.cpp
 #ifndef BOT_USER
 # define BOT_USER "Zaphod Beeblebot"
 #endif // ! BOT_USER
+
+#ifndef MAX_LENGTH
+# define MAX_LENGTH 512
+#endif // ! MAX_LENGTH
+
+#define CRLF "\r\n"
 
 class Bot {
     public:
@@ -36,12 +41,15 @@ class Bot {
         // Setters
     private:
         // Private Variables
-        int     _exit;      // to retreive exit status
-        int     _serverfd;  // fd of the irc server we connect to
-        bool    _connected;
+        int         _exit;      // to retreive exit status
+        int         _serverfd;
+        bool        _connected;
+        std::string _buf;
 
         // Private Member Functions
         const char* checkPort(const char *str);
+        void sendToServer(const std::string& message);
+        void readFromServer( void );
 };
 
 #endif // ! BOT_HPP
