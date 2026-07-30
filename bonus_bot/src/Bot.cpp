@@ -87,6 +87,8 @@ void Bot::login( const std::string& password ) {
     sendToServer("NICK " + std::string(BOT_NICK) + CRLF);
     sendToServer("USER " + std::string(BOT_USER) + " 0 * :Whatever" + CRLF);
     sendToServer("JOIN #test");
+
+    std::cout << "\n";
 }
 
 int Bot::run( void ) {
@@ -115,7 +117,7 @@ void Bot::sendToServer(const std::string& message) {
         std::cerr << "Send error: not connected to any server" << std::endl;
     }
 
-    std::cout << OUT_PROMPT << message << std::endl;
+    std::cout << OUT_PROMPT << message;
 
     if (send(_serverfd, message.c_str(), message.size(), 0) == -1)
         std::cerr << "Send error" << std::endl;
@@ -148,7 +150,7 @@ void Bot::processBuffer( void ) {
             msg = msg.substr(0, 510) + CRLF;
         }
 
-        std::cout <<  msg << std::endl;
+        std::cout << IN_PROMPT << msg;
         // TODO: React to msg
     }
 }
