@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include <cerrno>
 #include <cstddef>
+#include <ctime>
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
@@ -137,6 +138,26 @@ void Bot::readFromServer( void ) {
     _buf.append(buf, nbytes);
 }
 
+// TODO: Remove here
+#include <ctime>
+#include <iostream>
+#include <string>
+#include <stdio.h>
+#include <time.h>
+
+// Get the current date/time. The format is YYYY-MM-DD.HH:mm:ss
+const std::string currentDateTime() {
+    time_t     now = time(0);
+    struct tm  tstruct;
+    char       buf[80];
+    tstruct = *localtime(&now);
+    // Visit http://en.cppreference.com/w/cpp/chrono/c/strftime
+    // for more information about the date/time format
+    strftime(buf, sizeof(buf), "%Y-%m-%d.%X", &tstruct);
+
+    return buf;
+}
+
 void Bot::processBuffer( void ) {
     size_t delimPos = 0;
     while ((delimPos = _buf.find("\r\n")) != std::string::npos) {
@@ -149,6 +170,14 @@ void Bot::processBuffer( void ) {
         }
 
         std::cout << IN_PROMPT << msg;
+        if (msg.find("!time") != std::string::npos) {
+
+            std::string answer("PRIVMSG #test :");
+            std::string currTime(currentDateTime());
+            std::string end(CRLF);
+
+            sendToServer(answer + currTime + end);
+        }
         // TODO: React to msg
     }
 }
