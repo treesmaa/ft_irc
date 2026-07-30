@@ -51,6 +51,7 @@ class Bot {
         const char* checkPort(const char *str);
         void sendToServer(const std::string& message);
         void readFromServer( void );
+        void processBuffer( void );
 };
 
 #endif // ! BOT_HPP

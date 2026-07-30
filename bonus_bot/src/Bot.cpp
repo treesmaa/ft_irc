@@ -81,13 +81,14 @@ void Bot::login( const std::string& password ) {
     sendToServer("PASS " + password + CRLF);
     sendToServer("NICK " + std::string(BOT_NICK) + CRLF);
     sendToServer("USER " + std::string(BOT_USER) + " 0 * :Whatever" + CRLF);
+    sendToServer("JOIN #test");
 }
 
 int Bot::run( void ) {
     while (!g_stop && _connected) {
         // TODO: add poll here instead
-        readFromServer();
-        // -> handle what was read
+        readFromServer();  // -> Handles commands inside
+        processBuffer();
         sleep(1); // TODO: remove once we use poll
     }
     return _exit;
@@ -123,14 +124,20 @@ void Bot::readFromServer( void ) {
     else if (nbytes == 0) {
         throw std::runtime_error(std::string("Error: recv(): ") + strerror(errno)); // TODO: Ask if throw is fine here, assume i can kill server if receive fails
     }
-
     _buf.append(buf, nbytes);
-    size_t pos = 0;
-    while ((pos = _buf.find("\r\n")) != std::string::npos) {
-        std::string line = _buf.substr(0, pos + 2);
-        _buf.erase(0, pos + 2);
-        if (line.size() > 512) //message cannot exceed 512 characters (incl. CRLF ("\r\n")) per RFC
-            line = line.substr(0, 510) + CRLF;
-        std::cout << line;
+}
+
+void Bot::processBuffer( void ) {
+    while (size_t delimPos = _buf.find("\r\n") != std::string::npos) {
+
+        std::string msg = _buf.substr(0, delimPos + 2);
+        _buf.erase(0, delimPos + 2);
+
+        if (msg.size() > 512) {
+            msg = msg.substr(0, 510) + CRLF;
+        }
+
+        std::cout << msg;
+        // TODO: React to msg
     }
 }
