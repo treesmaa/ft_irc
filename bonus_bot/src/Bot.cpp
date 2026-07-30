@@ -86,9 +86,7 @@ void Bot::login( const std::string& password ) {
     sendToServer("PASS " + password + CRLF);
     sendToServer("NICK " + std::string(BOT_NICK) + CRLF);
     sendToServer("USER " + std::string(BOT_USER) + " 0 * :Whatever" + CRLF);
-    sendToServer("JOIN #test");
-
-    std::cout << "\n";
+    sendToServer("JOIN #test" + std::string(CRLF));
 }
 
 int Bot::run( void ) {
