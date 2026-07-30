@@ -2,14 +2,19 @@
 
 #include <arpa/inet.h>
 #include <cerrno>
+#include <cstddef>
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
+#include <ostream>
 #include <string>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <fcntl.h>
+
+#define IN_PROMPT  ">>>  "
+#define OUT_PROMPT "<<<  "
 
 // Constructors & Destructor
 Bot::Bot( void ) : _exit(0), _serverfd(-1), _connected(false) {}
@@ -109,6 +114,9 @@ void Bot::sendToServer(const std::string& message) {
     if (not _connected) {
         std::cerr << "Send error: not connected to any server" << std::endl;
     }
+
+    std::cout << OUT_PROMPT << message << std::endl;
+
     if (send(_serverfd, message.c_str(), message.size(), 0) == -1)
         std::cerr << "Send error" << std::endl;
 }
@@ -130,7 +138,8 @@ void Bot::readFromServer( void ) {
 }
 
 void Bot::processBuffer( void ) {
-    while (size_t delimPos = _buf.find("\r\n") != std::string::npos) {
+    size_t delimPos = 0;
+    while ((delimPos = _buf.find("\r\n")) != std::string::npos) {
 
         std::string msg = _buf.substr(0, delimPos + 2);
         _buf.erase(0, delimPos + 2);
@@ -139,7 +148,7 @@ void Bot::processBuffer( void ) {
             msg = msg.substr(0, 510) + CRLF;
         }
 
-        std::cout << msg;
+        std::cout <<  msg << std::endl;
         // TODO: React to msg
     }
 }
