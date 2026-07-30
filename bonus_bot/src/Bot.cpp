@@ -1,5 +1,6 @@
 #include "Bot.hpp"
 #include <iostream>
+#include <sstream>
 
 // Constructors & Destructor
 Bot::Bot( void ) : _exit(0), _connected(false) {}
@@ -16,7 +17,7 @@ Bot& Bot::operator=( const Bot& other ) {
 }
 
 // General methods
-int Bot::connect( const std::string& network, const int& port, const std::string& password ) {
+int Bot::connect( const std::string& network, const std::string& port, const std::string& password ) {
     (void)network;
     (void)port;
     (void)password;
@@ -29,4 +30,15 @@ int Bot::run( void ) {
         std::cout << "marvin: I am depressed :(" << std::endl;
     }
     return _exit;
+}
+
+// Private Member Functions
+int Bot::convertPort(char *str) {
+    std::stringstream ss(str);
+    int port;
+
+    ss >> port;
+    if (ss.fail() || !ss.eof() || port < 1024 || port > 65535)
+        throw std::runtime_error("invalid port number");
+    return port;
 }

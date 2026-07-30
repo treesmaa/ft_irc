@@ -27,7 +27,7 @@ class Bot {
         Bot& operator=( const Bot& );
 
         // General Methods
-        int connect( const std::string& network, const int& port, const std::string& password );
+        int connect( const std::string& network, const std::string& port, const std::string& password );
         int run(); // Essiantially the main loop
 
         // Getters
@@ -38,6 +38,9 @@ class Bot {
         // Private Variables
         int     _exit;      // to retreive exit status
         bool    _connected;
+
+        // Private Member Functions
+        int convertPort(char *str);
 };
 
 #endif // ! BOT_HPP
