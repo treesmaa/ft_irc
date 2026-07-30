@@ -12,7 +12,11 @@
 // Constructors & Destructor
 Bot::Bot( void ) : _exit(0), _serverfd(-1), _connected(false) {}
 Bot::Bot( const Bot& other ) { *this = other; }
-Bot::~Bot( void ) {}
+Bot::~Bot( void ) {
+    if (_serverfd != -1) {
+        close(_serverfd);
+    }
+}
 
 // Operators
 Bot& Bot::operator=( const Bot& other ) {
