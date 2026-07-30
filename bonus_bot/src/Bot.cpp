@@ -106,6 +106,9 @@ const char* Bot::checkPort(const char *str) {
 void Bot::sendToServer(const std::string& message) {
     if (_serverfd < 0)
         return;
+    if (not _connected) {
+        std::cerr << "Send error: not connected to any server" << std::endl;
+    }
     if (send(_serverfd, message.c_str(), message.size(), 0) == -1)
         std::cerr << "Send error" << std::endl;
 }
@@ -118,11 +121,10 @@ void Bot::readFromServer( void ) {
     if (nbytes < 0) {
         if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
             return;
-        std::cerr << "Error: recv(): " << strerror(errno) << std::endl;
-            throw std::runtime_error(std::string("Error: recv(): ") + strerror(errno)); // TODO: Ask if throw is fine here, assume i can kill server if receive fails
+        throw std::runtime_error(std::string("recv(): ") + strerror(errno));
     }
     else if (nbytes == 0) {
-        throw std::runtime_error(std::string("Error: recv(): ") + strerror(errno)); // TODO: Ask if throw is fine here, assume i can kill server if receive fails
+        throw std::runtime_error(std::string("recv(): ") + strerror(errno));
     }
     _buf.append(buf, nbytes);
 }
