@@ -125,6 +125,8 @@ Real IRC clients provide a user interface on top of the protocol. Commands are t
 
 ### Netcat
 
+IRC messages must be terminated with `CRLF` (`\r\n`). Depending on the netcat version, the `-C` or `-c`` option may be required to send the correct line endings.
+
 **Linux**
 
 ```sh
@@ -153,9 +155,6 @@ PASS yourpassword
 NICK yournick
 USER username 0 * :Your Real Name
 ```
-
-IRC messages must be terminated with `CRLF` (`\r\n`). Depending on the netcat version, the `-C` option may be required to send the correct line endings.
-
 ---
 
 ### Connecting with a Real IRC Client
