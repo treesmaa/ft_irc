@@ -52,6 +52,13 @@ class Bot {
         void sendToServer(const std::string& message);
         void readFromServer( void );
         void processBuffer( void );
+
+        // Commands
+        void sendPASS( const std::string& password );
+        void sendNICK( const std::string& nickname );
+        void sendUSER( const std::string& username, const std::string& mode,
+                        const std::string& unused, const std::string& msg );
+        void sendJOIN( const std::string& channel);
 };
 
 #endif // ! BOT_HPP

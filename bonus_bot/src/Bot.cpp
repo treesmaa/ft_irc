@@ -84,9 +84,9 @@ void Bot::connect( const std::string& network, const std::string& port) {
 }
 
 void Bot::login( const std::string& password ) {
-    sendToServer("PASS " + password + CRLF);
-    sendToServer("NICK " + std::string(BOT_NICK) + CRLF);
-    sendToServer("USER " + std::string(BOT_USER) + " 0 * :Whatever" + CRLF);
+    sendPASS(password);
+    sendNICK(BOT_NICK);
+    sendUSER(BOT_USER, "0", "*", "Zaphod Beeblebot The First");
     sendToServer("JOIN #test" + std::string(CRLF));
 }
 
@@ -138,26 +138,6 @@ void Bot::readFromServer( void ) {
     _buf.append(buf, nbytes);
 }
 
-// TODO: Remove here
-#include <ctime>
-#include <iostream>
-#include <string>
-#include <stdio.h>
-#include <time.h>
-
-// Get the current date/time. The format is YYYY-MM-DD.HH:mm:ss
-const std::string currentDateTime() {
-    time_t     now = time(0);
-    struct tm  tstruct;
-    char       buf[80];
-    tstruct = *localtime(&now);
-    // Visit http://en.cppreference.com/w/cpp/chrono/c/strftime
-    // for more information about the date/time format
-    strftime(buf, sizeof(buf), "%Y-%m-%d.%X", &tstruct);
-
-    return buf;
-}
-
 void Bot::processBuffer( void ) {
     size_t delimPos = 0;
     while ((delimPos = _buf.find("\r\n")) != std::string::npos) {
@@ -170,14 +150,32 @@ void Bot::processBuffer( void ) {
         }
 
         std::cout << IN_PROMPT << msg;
-        if (msg.find("!time") != std::string::npos) {
-
-            std::string answer("PRIVMSG #test :");
-            std::string currTime(currentDateTime());
-            std::string end(CRLF);
-
-            sendToServer(answer + currTime + end);
-        }
         // TODO: React to msg
     }
+}
+
+// Commands
+void Bot::sendPASS( const std::string& password ) {
+    std::string msg("PASS ");
+    msg = msg + password + CRLF;
+    this->sendToServer(msg);
+}
+
+void Bot::sendNICK( const std::string& nickname ) {
+    std::string msg("NICK ");
+    msg = msg + nickname + CRLF;
+    this->sendToServer(msg);
+}
+
+void Bot::sendUSER( const std::string& username, const std::string& mode,
+                        const std::string& unused, const std::string& in_msg ) {
+    std::string msg("USER ");
+    msg = msg + username + " " + mode + " " + unused + " :" + in_msg + CRLF;
+    this->sendToServer(msg);
+}
+
+void Bot::sendJOIN( const std::string& channel ) {
+    std::string msg("JOIN ");
+    msg = msg + channel + CRLF;
+    this->sendToServer(msg);
 }
