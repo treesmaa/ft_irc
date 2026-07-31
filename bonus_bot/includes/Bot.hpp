@@ -51,14 +51,18 @@ class Bot {
         const char* checkPort(const char *str);
         void sendToServer(const std::string& message);
         void readFromServer( void );
+        std::string sanitize( const std::string& str );
+        std::string sanitizeSender( const std::string& sender );
         void processBuffer( void );
+        void processMessage( const std::string& message );
 
-        // Commands
+        // Server Commands
         void sendPASS( const std::string& password );
         void sendNICK( const std::string& nickname );
         void sendUSER( const std::string& username, const std::string& mode,
                         const std::string& unused, const std::string& msg );
         void sendJOIN( const std::string& channel);
+        void sendPRIVMSG( const std::string& receiver, const std::string& in_msg );
 };
 
 #endif // ! BOT_HPP

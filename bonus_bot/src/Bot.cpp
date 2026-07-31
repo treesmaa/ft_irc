@@ -1,5 +1,6 @@
 #include "Bot.hpp"
 
+#include <alloca.h>
 #include <arpa/inet.h>
 #include <cerrno>
 #include <cstddef>
@@ -8,11 +9,13 @@
 #include <cstdlib>
 #include <cstring>
 #include <ostream>
+#include <sstream>
 #include <string>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <fcntl.h>
+#include <vector>
 
 #define IN_PROMPT  ">>>  "
 #define OUT_PROMPT "<<<  "
@@ -87,7 +90,7 @@ void Bot::login( const std::string& password ) {
     sendPASS(password);
     sendNICK(BOT_NICK);
     sendUSER(BOT_USER, "0", "*", "Zaphod Beeblebot The First");
-    sendToServer("JOIN #test" + std::string(CRLF));
+    // sendToServer("JOIN #test" + std::string(CRLF));
 }
 
 int Bot::run( void ) {
@@ -138,6 +141,28 @@ void Bot::readFromServer( void ) {
     _buf.append(buf, nbytes);
 }
 
+std::string Bot::sanitize( const std::string& str ) {
+    std::string clean;
+
+    for (std::string::const_iterator it = str.begin(); it != str.end(); ++it) {
+        if (*it != '\n' && *it != '\r') {
+            clean.push_back(*it);
+        }
+    }
+    return clean;
+}
+
+std::string Bot::sanitizeSender( const std::string& sender ) {
+    std::string res = "";
+    std::string::const_iterator it = sender.begin();
+    ++it;
+    while (it != sender.end() && (*it) != ' ' && (*it) != '!') {
+        res.push_back(*it);
+        ++it;
+    }
+    return res;
+}
+
 void Bot::processBuffer( void ) {
     size_t delimPos = 0;
     while ((delimPos = _buf.find("\r\n")) != std::string::npos) {
@@ -150,11 +175,72 @@ void Bot::processBuffer( void ) {
         }
 
         std::cout << IN_PROMPT << msg;
-        // TODO: React to msg
+        this->processMessage(msg);
     }
 }
 
-// Commands
+void Bot::processMessage( const std::string& message ) {
+    std::stringstream ss(message);
+    std::string buffer;
+    std::vector<std::string> tokens;
+
+    while (getline(ss, buffer, ' ')) {
+        tokens.push_back(buffer);
+        // std::cout << "tok: " << buffer << std::endl; // TODO: Remove - debug only
+    }
+
+
+    std::string sender;
+    std::string cmd;
+    std::string receiver;
+
+    std::vector<std::string>::iterator it = tokens.begin();
+    if (it != tokens.end()) {
+        sender = this->sanitizeSender(*it);
+        ++it;
+    }
+
+    if (it != tokens.end()) {
+        cmd = *it;
+        ++it;
+    }
+
+    if (it != tokens.end()) {
+        receiver = *it;
+        // if we are the receiver we send back to sender, else to same receiver aka channel
+        if (receiver == BOT_NICK) {
+            receiver = sender;
+        }
+        ++it;
+    }
+
+    // Handle invite on 4th token
+    if (it != tokens.end()) {
+        if (cmd == "INVITE" && ((*it).find("#") != std::string::npos || (*it).find("&") != std::string::npos )) {
+            this->sendJOIN(*it);
+            std::string greet("Hello ");
+            std::string channel = this->sanitize(*it);
+            greet = greet + channel + ", i hope everyone is doing great today!";
+            sendPRIVMSG(channel, greet);
+        }
+        ++it;
+    }
+
+    // Just go through the rest of the tokens lazily
+    while (it != tokens.end()) {
+        std::string tok = this->sanitize(*it);
+
+        if (tok == "!time") {
+            sendPRIVMSG(receiver, "Its currently");
+        }
+
+
+
+        ++it;
+    }
+}
+
+// Server Commands
 void Bot::sendPASS( const std::string& password ) {
     std::string msg("PASS ");
     msg = msg + password + CRLF;
@@ -177,5 +263,11 @@ void Bot::sendUSER( const std::string& username, const std::string& mode,
 void Bot::sendJOIN( const std::string& channel ) {
     std::string msg("JOIN ");
     msg = msg + channel + CRLF;
+    this->sendToServer(msg);
+}
+
+void Bot::sendPRIVMSG( const std::string& receiver, const std::string& in_msg ) {
+    std::string msg("PRIVMSG ");
+    msg = msg + receiver + " :" + in_msg + CRLF;
     this->sendToServer(msg);
 }
