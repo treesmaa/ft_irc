@@ -93,6 +93,10 @@ void Bot::login( const std::string& password ) {
     // sendToServer("JOIN #test" + std::string(CRLF));
 }
 
+void Bot::join( const std::string& channel ) {
+    this->sendJOIN(channel);
+}
+
 int Bot::run( void ) {
     while (!g_stop && _connected) {
         // TODO: add poll here instead
@@ -202,6 +206,10 @@ void Bot::processMessage( const std::string& message ) {
 
     if (it != tokens.end()) {
         cmd = *it;
+        if (cmd == "464") {
+            throw std::runtime_error(std::string("incorrect password"));
+        }
+
         ++it;
     }
 

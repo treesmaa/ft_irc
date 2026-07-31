@@ -33,8 +33,9 @@ class Bot {
 
         // General Methods
         void connect( const std::string& network, const std::string& port);
-        void login( const std::string& password );
-        int run(); // Essiantially the main loop
+        void login  ( const std::string& password );
+        void join   ( const std::string& channel );
+        int run( void ); // Essiantially the main loop
 
         // Getters
         int exit( void );
