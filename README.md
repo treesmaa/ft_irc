@@ -159,7 +159,7 @@ USER username 0 * :Your Real Name
 
 ### Connecting with a Real IRC Client
 
-Instead of using netcat, you can connect to the server using a standard IRC client such as irssi, WeeChat, HexChat, or mIRC.
+You can also connect to the server using an IRC client such as irssi, WeeChat, HexChat, or mIRC.
 
 #### Connection Settings
 
