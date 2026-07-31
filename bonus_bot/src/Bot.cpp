@@ -160,7 +160,8 @@ std::string Bot::sanitizeSender( const std::string& sender ) {
     std::string res = "";
     std::string::const_iterator it = sender.begin();
     ++it;
-    while (it != sender.end() && (*it) != ' ' && (*it) != '!') {
+    while (it != sender.end() && (*it) != ' '  && (*it) != '!'
+                              && (*it) != '\r' && (*it) != '\n') {
         res.push_back(*it);
         ++it;
     }
@@ -190,7 +191,7 @@ void Bot::processMessage( const std::string& message ) {
 
     while (getline(ss, buffer, ' ')) {
         tokens.push_back(buffer);
-        // std::cout << "tok: " << buffer << std::endl; // TODO: Remove - debug only
+        std::cout << "tok: " << buffer << std::endl; // TODO: Remove - debug only
     }
 
 
@@ -215,34 +216,47 @@ void Bot::processMessage( const std::string& message ) {
 
     if (it != tokens.end()) {
         receiver = *it;
+
         // if we are the receiver we send back to sender, else to same receiver aka channel
         if (receiver == BOT_NICK) {
             receiver = sender;
         }
+
+        // bot_feat: greet after joining
+        if (cmd == "JOIN") {
+            std::string msg("Hey ");
+            std::string chan = this->sanitizeSender(*it);
+            msg = msg + sender + ", welcome to the " + chan + " channel!";
+            this->sendPRIVMSG(chan, msg);
+        }
+
         ++it;
     }
 
     // Handle invite on 4th token
     if (it != tokens.end()) {
+
+        // bot_feat: join a channel when receiving an invite
         if (cmd == "INVITE" && ((*it).find("#") != std::string::npos || (*it).find("&") != std::string::npos )) {
             this->sendJOIN(*it);
             std::string greet("Hello ");
             std::string channel = this->sanitize(*it);
             greet = greet + channel + ", i hope everyone is doing great today!";
             sendPRIVMSG(channel, greet);
+            return;
         }
+
         ++it;
     }
 
-    // Just go through the rest of the tokens lazily
+    // Just go through the rest of the tokens lazily and look for bot cmds
     while (it != tokens.end()) {
         std::string tok = this->sanitize(*it);
 
+        // bot_feat: "!time" tells current time
         if (tok == "!time") {
             sendPRIVMSG(receiver, "Its currently");
         }
-
-
 
         ++it;
     }
