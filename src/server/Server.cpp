@@ -240,7 +240,7 @@ int Server::readClientData(int idx) {
     while ((pos = _clients[client_fd].getBuffer().find("\r\n")) != std::string::npos) {
         std::string line = _clients[client_fd].getBuffer().substr(0, pos + 2);
         _clients[client_fd].getBuffer().erase(0, pos + 2);
-        if (line.size() > 512) //message cannot exceed 512 characters (incl. CRLF ("\r\n")) per RFC
+        if (line.size() > 512)
             return -1;
         handleMessage(line, _clients[client_fd]);
     }

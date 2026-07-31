@@ -19,6 +19,8 @@ SRC_COMMAND := \
 	src/command/CommandHandler.cpp \
 	src/command/CommandParser.cpp
 
+SRC_SIGNAL := src/signal/Signal.cpp
+
 SRC_DEBUG := src/debug/Debug.cpp
 
 SRC := \
@@ -27,6 +29,7 @@ SRC := \
 	$(SRC_CLIENT) \
 	$(SRC_CHANNEL) \
 	$(SRC_COMMAND) \
+	$(SRC_SIGNAL) \
 	$(SRC_DEBUG)
 
 # ---------------- OBJECTS ----------------

@@ -1,11 +1,5 @@
 #include "Server.hpp"
-
-volatile sig_atomic_t g_stop = 0;
-
-void signalHandler(int signum) {
-    (void)signum;
-    g_stop = 1;
-}
+#include "Signal.hpp"
 
 int convertPort(char *str) {
     std::stringstream ss(str);
@@ -24,10 +18,7 @@ int main(int argc, char **argv) {
         return 1;
     }
     try {
-        signal(SIGINT, signalHandler);
-        signal(SIGTERM, signalHandler);
-        signal(SIGPIPE, SIG_IGN);
-
+        setupSignals();
         Server server(convertPort(argv[1]), argv[2]);
         server.boot();
     }
