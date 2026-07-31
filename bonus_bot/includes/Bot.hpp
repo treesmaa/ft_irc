@@ -9,16 +9,21 @@ extern volatile sig_atomic_t g_stop; // defined in main.cpp
 // RFC 2812: NICK < 10 chars! else 432 ERR_ERRONEUSNICKNAME
 #ifndef BOT_NICK
 # define BOT_NICK "marvin"
-#endif // ! BOT_NICK
+#endif //! BOT_NICK
 
 #ifndef BOT_USER
 # define BOT_USER "Zaphod_Beeblebot"
-#endif // ! BOT_USER
+#endif //! BOT_USER
 
-#ifndef MAX_LENGTH
-# define MAX_LENGTH 512
-#endif // ! MAX_LENGTH
+#ifndef IN_PROMPT
+# define IN_PROMPT  ">>>  "
+#endif //! IN_PROMPT
 
+#ifndef OUT_PROMPT
+# define OUT_PROMPT "<<<  "
+#endif //!OUT_PROMPT
+
+#define MAX_LENGTH 512
 #define CRLF "\r\n"
 
 class Bot {
