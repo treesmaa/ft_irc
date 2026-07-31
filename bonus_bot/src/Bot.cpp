@@ -260,6 +260,9 @@ void Bot::processMessage( const std::string& message ) {
 // Bot Commands
 // ====================================================================================================================
 void Bot::featGreet( const std::string& joiner, const std::string& channel ) {
+    if (joiner == BOT_NICK) {
+        return; // Don't greet yourself
+    }
     std::string msg("Hey ");
     std::string chan = this->sanitizeToken(channel);
     msg = msg + joiner + ", welcome to the " + chan + " channel!";
