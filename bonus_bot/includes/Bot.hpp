@@ -36,16 +36,12 @@ class Bot {
         // Operators
         Bot& operator=( const Bot& );
 
-        // General Methods
+        // Public Methods
         void connect( const std::string& network, const std::string& port);
         void login  ( const std::string& password );
         void join   ( const std::string& channel );
         int run( void ); // Essiantially the main loop
 
-        // Getters
-        int exit( void );
-
-        // Setters
     private:
         // Private Variables
         int         _exit;      // to retreive exit status
@@ -57,17 +53,21 @@ class Bot {
         const char* checkPort(const char *str);
         void sendToServer(const std::string& message);
         void readFromServer( void );
-        std::string sanitize( const std::string& str );
-        std::string sanitizeSender( const std::string& sender );
+        std::string sanitizeCRLF( const std::string& str );
+        std::string sanitizeToken( const std::string& sender );
         void processBuffer( void );
         void processMessage( const std::string& message );
 
+        // Bot Commands
+        void featGreet   ( const std::string& joiner, const std::string& channel );
+        void featAutoJoin( const std::string& channel );
+
         // Server Commands
-        void sendPASS( const std::string& password );
-        void sendNICK( const std::string& nickname );
-        void sendUSER( const std::string& username, const std::string& mode,
-                        const std::string& unused, const std::string& msg );
-        void sendJOIN( const std::string& channel);
+        void sendPASS   ( const std::string& password );
+        void sendNICK   ( const std::string& nickname );
+        void sendUSER   ( const std::string& username, const std::string& mode,
+                          const std::string& unused,   const std::string& msg );
+        void sendJOIN   ( const std::string& channel);
         void sendPRIVMSG( const std::string& receiver, const std::string& in_msg );
 };
 

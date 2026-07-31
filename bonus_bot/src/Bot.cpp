@@ -93,7 +93,6 @@ void Bot::login( const std::string& password ) {
     sendPASS(password);
     sendNICK(BOT_NICK);
     sendUSER(BOT_USER, "0", "*", "Zaphod Beeblebot The First");
-    // sendToServer("JOIN #test" + std::string(CRLF));
 }
 
 void Bot::join( const std::string& channel ) {
@@ -149,7 +148,7 @@ void Bot::readFromServer( void ) {
     _buf.append(buf, nbytes);
 }
 
-std::string Bot::sanitize( const std::string& str ) {
+std::string Bot::sanitizeCRLF( const std::string& str ) {
     std::string clean;
 
     for (std::string::const_iterator it = str.begin(); it != str.end(); ++it) {
@@ -160,10 +159,12 @@ std::string Bot::sanitize( const std::string& str ) {
     return clean;
 }
 
-std::string Bot::sanitizeSender( const std::string& sender ) {
+std::string Bot::sanitizeToken( const std::string& sender ) {
     std::string res = "";
     std::string::const_iterator it = sender.begin();
-    ++it;
+    if (sender.length() > 0 && sender.at(0) == ':') {
+        ++it;
+    }
     while (it != sender.end() && (*it) != ' '  && (*it) != '!'
                               && (*it) != '\r' && (*it) != '\n') {
         res.push_back(*it);
@@ -195,7 +196,7 @@ void Bot::processMessage( const std::string& message ) {
 
     while (getline(ss, buffer, ' ')) {
         tokens.push_back(buffer);
-        std::cout << "tok: " << buffer << std::endl; // TODO: Remove - debug only
+         // std::cout << "tok: " << buffer << std::endl; // TODO: Remove - debug only
     }
 
 
@@ -205,7 +206,7 @@ void Bot::processMessage( const std::string& message ) {
 
     std::vector<std::string>::iterator it = tokens.begin();
     if (it != tokens.end()) {
-        sender = this->sanitizeSender(*it);
+        sender = this->sanitizeToken(*it);
         ++it;
     }
 
@@ -226,27 +227,17 @@ void Bot::processMessage( const std::string& message ) {
             receiver = sender;
         }
 
-        // bot_feat: greet after joining
         if (cmd == "JOIN") {
-            std::string msg("Hey ");
-            std::string chan = this->sanitizeSender(*it);
-            msg = msg + sender + ", welcome to the " + chan + " channel!";
-            this->sendPRIVMSG(chan, msg);
+            this->featGreet(sender, *it);
         }
 
         ++it;
     }
 
-    // Handle invite on 4th token
     if (it != tokens.end()) {
 
-        // bot_feat: join a channel when receiving an invite
-        if (cmd == "INVITE" && ((*it).find("#") != std::string::npos || (*it).find("&") != std::string::npos )) {
-            this->sendJOIN(*it);
-            std::string greet("Hello ");
-            std::string channel = this->sanitize(*it);
-            greet = greet + channel + ", i hope everyone is doing great today!";
-            sendPRIVMSG(channel, greet);
+        if (cmd == "INVITE") {
+            this->featAutoJoin(*it);
             return;
         }
 
@@ -255,15 +246,32 @@ void Bot::processMessage( const std::string& message ) {
 
     // Just go through the rest of the tokens lazily and look for bot cmds
     while (it != tokens.end()) {
-        std::string tok = this->sanitize(*it);
+        std::string tok = this->sanitizeCRLF(*it);
 
-        // bot_feat: "!time" tells current time
         if (tok == "!time") {
             sendPRIVMSG(receiver, "Its currently");
         }
 
         ++it;
     }
+}
+
+// ====================================================================================================================
+// Bot Commands
+// ====================================================================================================================
+void Bot::featGreet( const std::string& joiner, const std::string& channel ) {
+    std::string msg("Hey ");
+    std::string chan = this->sanitizeToken(channel);
+    msg = msg + joiner + ", welcome to the " + chan + " channel!";
+    this->sendPRIVMSG(chan, msg);
+}
+
+void Bot::featAutoJoin( const std::string& channel ) {
+    std::string chan = this->sanitizeCRLF(channel);
+    this->sendJOIN(chan);
+    std::string greet("Hello ");
+    greet = greet + chan + ", i hope everyone is doing great today!";
+    this->sendPRIVMSG(chan, greet);
 }
 
 // ====================================================================================================================
