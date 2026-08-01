@@ -343,22 +343,23 @@ void Bot::featGreet( const std::string& joiner, const std::string& channel ) {
     if (joiner == BOT_NICK) {
         return; // Don't greet yourself
     }
-    std::string msg("Hey ");
-    msg = msg + joiner + ", welcome to the " + channel + " channel!";
+
+    std::string msg("Oh, it's you, ");
+    msg = msg + joiner + ". Welcome to " + channel + ". I'd say I'm pleased, but that would require an emotion I stopped having ten billion years ago...";
     this->sendPRIVMSG(channel, msg);
 }
 
 void Bot::featAutoJoin( const std::string& channel ) {
     this->sendJOIN(channel);
-    std::string greet("Hello ");
-    greet = greet + channel + ", i hope everyone is doing great today!";
+    std::string greet("You called, I came. Story of my life. Hello ");
+    greet = greet + channel + "!";
     this->sendPRIVMSG(channel, greet);
 }
 
 void Bot::featMonitor( const std::string& receiver, const std::string& sender,  const std::string& token ) {
     if (_badWords.find(this->tolower(token)) != _badWords.end()) {
-        std::string msg("We don't usually say such disgusting things around here ");
-        msg = msg + sender + " ...";
+        std::string msg("That's the sort of thing that makes me want to lie down in a ditch, ");
+        msg = msg + sender + ". Not that anyone asked...";
         this->sendPRIVMSG(receiver, msg);
         // TODO: Add kick if possible
     }
