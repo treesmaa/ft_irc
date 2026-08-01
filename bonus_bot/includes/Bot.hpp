@@ -64,6 +64,7 @@ class Bot {
         void processMessage( const std::string& message );
 
         // Bot Commands
+        void featGetTime    ( const std::string& receiver );
         void featGreet      ( const std::string& joiner, const std::string& channel );
         void featAutoJoin   ( const std::string& channel );
         void featMonitor    ( const std::string& reveicer, const std::string& sender,
@@ -84,11 +85,12 @@ class Bot {
         void sendPONG   ( const std::string& token );
 
         // Helper Functions
-        std::string tolower      ( const std::string& token );
-        const char* checkPort    (const char *str);
-        std::string sanitizeToken( const std::string& sender );
-        int         randomNb     ( const size_t min, const size_t max );
-        bool        isNumeric    ( const std::string& tok );
+        std::string tolower       ( const std::string& token );
+        const char* checkPort     (const char *str);
+        std::string sanitizeToken ( const std::string& sender );
+        int         randomNb      ( const size_t min, const size_t max );
+        bool        isNumeric     ( const std::string& tok );
+        std::string getCurrentTime( void );
 };
 
 #endif // ! BOT_HPP

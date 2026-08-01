@@ -302,7 +302,7 @@ void Bot::processMessage( const std::string& message ) {
         }
 
         if (tok == "!time") {
-            sendPRIVMSG(receiver, "Its currently");
+            this->featGetTime(receiver);
         }
         else if (tok == "!panic") {
             sendPRIVMSG(receiver, "don't");
@@ -330,6 +330,12 @@ void Bot::processMessage( const std::string& message ) {
 // ====================================================================================================================
 // Bot Commands
 // ====================================================================================================================
+void Bot::featGetTime( const std::string& receiver ) {
+    std::string msg("It is ");
+    msg = msg + this->getCurrentTime() + " here in the swamps of Squornshellous Zeta, not that it matters...";
+    this->sendPRIVMSG(receiver, msg);
+}
+
 void Bot::featGreet( const std::string& joiner, const std::string& channel ) {
     if (joiner == BOT_NICK) {
         return; // Don't greet yourself
@@ -375,7 +381,6 @@ void Bot::featRandNb( const std::string& receiver, const std::string& range ) {
     std::string buff;
     while (getline(ss, buff, ':')) {
         if (!isNumeric(buff)) {
-            std::cout << "buff: " << buff << std::endl;
             this->sendPRIVMSG(receiver, "Invalid range!");
             return;
         }
@@ -507,4 +512,13 @@ bool Bot::isNumeric( const std::string& tok ) {
         }
     }
     return true;
+}
+
+std::string Bot::getCurrentTime( void ) {
+    time_t     now = time(0);
+    struct tm  tstruct;
+    char       buf[6];
+    localtime_r(&now, &tstruct);
+    strftime(buf, sizeof(buf), "%H:%M", &tstruct);
+    return buf;
 }
