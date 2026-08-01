@@ -248,7 +248,14 @@ void Bot::processMessage( const std::string& message ) {
 
     // Just go through the rest of the tokens lazily and look for bot cmds
     while (it != tokens.end()) {
+
         std::string tok = this->sanitizeToken(*it);
+
+        // Get next non-empty token (if it exists)
+       std::vector<std::string>::iterator nextIt = it + 1;
+        while (nextIt != tokens.end() && this->sanitizeToken(*nextIt) == "") {
+            ++nextIt;
+        }
 
         if (cmd == "INVITE") {
             this->featAutoJoin(tok);
@@ -269,10 +276,6 @@ void Bot::processMessage( const std::string& message ) {
             this->featJoke(receiver);
         }
         else if (tok == "!rand") {
-            std::vector<std::string>::iterator nextIt = it + 1;
-            while (nextIt != tokens.end() && this->sanitizeToken(*nextIt) == "") {
-                ++nextIt;
-            }
             if (nextIt != tokens.end() && sender != BOT_NICK) {
                 this->featRandNb(receiver, this->sanitizeToken(*nextIt));
             }
@@ -282,7 +285,7 @@ void Bot::processMessage( const std::string& message ) {
         }
 
         this->featMonitor(receiver, sender, tok);
-        ++it;
+        it = nextIt;
     }
 }
 
