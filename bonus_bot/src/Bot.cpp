@@ -37,8 +37,7 @@ Bot::Bot( const Bot& other ) { *this = other; }
 Bot::~Bot( void ) {
 
     // Say goodbye too all channels
-    std::vector<std::string> chanVec(_channels.begin(), _channels.end());
-    for (std::vector<std::string>::iterator it = chanVec.begin(); it != chanVec.end(); ++it) {
+    for (std::set<std::string>::iterator it = _channels.begin(); it != _channels.end(); ++it) {
         this->sendPRIVMSG(*it, "So long, and thanks for all the fish!");
     }
 
@@ -371,6 +370,7 @@ void Bot::featGreet( const std::string& joiner, const std::string& channel ) {
 }
 
 void Bot::featAutoJoin( const std::string& channel ) {
+    _channels.insert(channel);
     this->sendJOIN(channel);
     std::string greet("You called, I came. Story of my life. Hello ");
     greet = greet + channel + "!";
