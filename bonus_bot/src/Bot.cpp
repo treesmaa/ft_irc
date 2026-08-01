@@ -13,11 +13,13 @@
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <sys/poll.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <fcntl.h>
 #include <vector>
+#include <poll.h>
 
 // ====================================================================================================================
 // Constructors & Destructor
@@ -144,11 +146,36 @@ void Bot::join( const std::string& channel ) {
 }
 
 int Bot::run( void ) {
+    struct pollfd pfd;
+    pfd.fd = _serverfd;
+    pfd.events = POLLIN;
+
     while (!g_stop && _connected) {
-        // TODO: add poll here instead
-        readFromServer();  // -> Handles commands inside
-        processBuffer();
-        sleep(1); // TODO: remove once we use poll
+        pfd.revents = 0;
+        int ret = poll(&pfd, 1, -1);
+
+        if (ret < 0) {
+            if (errno == EINTR) {
+                continue; // e.g. SIGINT/SIGTERM handler fired -> loop re-checks g_stop
+            }
+            _connected = false;
+            throw std::runtime_error(std::string("poll(): ") + strerror(errno));
+        }
+
+        if (pfd.revents & POLLERR) {
+            _connected = false;
+            throw std::runtime_error(std::string("poll(): ") + strerror(errno));
+        }
+
+        else if (pfd.revents & POLLHUP) {
+            _connected = false;
+            throw std::runtime_error(std::string("poll(): ") + strerror(errno));
+        }
+
+        else if (pfd.revents & POLLIN) {
+            readFromServer();
+            processBuffer();
+        }
     }
     return _exit;
 }
@@ -210,7 +237,6 @@ void Bot::processMessage( const std::string& message ) {
         tokens.push_back(buffer);
          // std::cout << "tok: " << buffer << std::endl; // TODO: Remove - debug only
     }
-
 
     std::string sender;
     std::string cmd;
