@@ -64,11 +64,15 @@ class Bot {
         void processMessage( const std::string& message );
 
         // Bot Commands
-        void featGreet   ( const std::string& joiner, const std::string& channel );
-        void featAutoJoin( const std::string& channel );
-        void featMonitor ( const std::string& reveicer, const std::string& sender,
-                           const std::string& token );
-        void featJoke( const std::string& receiver );
+        void featGreet      ( const std::string& joiner, const std::string& channel );
+        void featAutoJoin   ( const std::string& channel );
+        void featMonitor    ( const std::string& reveicer, const std::string& sender,
+                              const std::string& token );
+        void featJoke       ( const std::string& receiver );
+        /*
+        *  @param range - A colon seperated range of "min:max"
+        */
+        void featRandNb     ( const std::string& receiver, const std::string& range );
 
         // Server Commands
         void sendPASS   ( const std::string& password );
@@ -83,6 +87,7 @@ class Bot {
         const char* checkPort    (const char *str);
         std::string sanitizeToken( const std::string& sender );
         int         randomNb     ( const size_t min, const size_t max );
+        bool        isNumeric    ( const std::string& tok );
 };
 
 #endif // ! BOT_HPP

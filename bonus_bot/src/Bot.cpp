@@ -240,17 +240,7 @@ void Bot::processMessage( const std::string& message ) {
         }
 
         if (cmd == "JOIN") {
-            this->featGreet(sender, *it);
-        }
-
-        ++it;
-    }
-
-    if (it != tokens.end()) {
-
-        if (cmd == "INVITE") {
-            this->featAutoJoin(*it);
-            return;
+            this->featGreet(sender, this->sanitizeToken(*it));
         }
 
         ++it;
@@ -259,6 +249,12 @@ void Bot::processMessage( const std::string& message ) {
     // Just go through the rest of the tokens lazily and look for bot cmds
     while (it != tokens.end()) {
         std::string tok = this->sanitizeToken(*it);
+
+        if (cmd == "INVITE") {
+            this->featAutoJoin(tok);
+            ++it;
+            continue;
+        }
 
         if (tok == "!time") {
             sendPRIVMSG(receiver, "Its currently");
@@ -271,6 +267,18 @@ void Bot::processMessage( const std::string& message ) {
         }
         else if (tok == "!joke") {
             this->featJoke(receiver);
+        }
+        else if (tok == "!rand") {
+            std::vector<std::string>::iterator nextIt = it + 1;
+            while (nextIt != tokens.end() && this->sanitizeToken(*nextIt) == "") {
+                ++nextIt;
+            }
+            if (nextIt != tokens.end() && sender != BOT_NICK) {
+                this->featRandNb(receiver, this->sanitizeToken(*nextIt));
+            }
+            else {
+                this->sendPRIVMSG(receiver, "Range missing!");
+            }
         }
 
         this->featMonitor(receiver, sender, tok);
@@ -286,17 +294,15 @@ void Bot::featGreet( const std::string& joiner, const std::string& channel ) {
         return; // Don't greet yourself
     }
     std::string msg("Hey ");
-    std::string chan = this->sanitizeToken(channel);
-    msg = msg + joiner + ", welcome to the " + chan + " channel!";
-    this->sendPRIVMSG(chan, msg);
+    msg = msg + joiner + ", welcome to the " + channel + " channel!";
+    this->sendPRIVMSG(channel, msg);
 }
 
 void Bot::featAutoJoin( const std::string& channel ) {
-    std::string chan = this->sanitizeToken(channel);
-    this->sendJOIN(chan);
+    this->sendJOIN(channel);
     std::string greet("Hello ");
-    greet = greet + chan + ", i hope everyone is doing great today!";
-    this->sendPRIVMSG(chan, greet);
+    greet = greet + channel + ", i hope everyone is doing great today!";
+    this->sendPRIVMSG(channel, greet);
 }
 
 void Bot::featMonitor( const std::string& receiver, const std::string& sender,  const std::string& token ) {
@@ -314,8 +320,51 @@ void Bot::featJoke( const std::string& receiver ) {
         sendPRIVMSG(receiver, "Life is too depressing for jokes...");
         return;
     }
-
     sendPRIVMSG(receiver, _jokes.at(this->randomNb(0, (_jokes.size() - 1))));
+}
+
+void Bot::featRandNb( const std::string& receiver, const std::string& range ) {
+
+    // sanitize leading potential leading ':'
+    std::string cleanRange = range; // this->sanitizeToken(range);
+
+    // Get range
+    std::stringstream ss(cleanRange);
+    std::vector<int> values;
+    std::string buff;
+    while (getline(ss, buff, ':')) {
+        if (!isNumeric(buff)) {
+            std::cout << "buff: " << buff << std::endl;
+            this->sendPRIVMSG(receiver, "Invalid range!");
+            return;
+        }
+        if (buff.size() > 9) {
+            this-> sendPRIVMSG(receiver, "Number too high!");
+            return;
+        }
+        int nb = atoi(buff.c_str());
+        if (nb > 1000000000) {
+            this->sendPRIVMSG(receiver, "Number too high!");
+            return;
+        }
+        values.push_back(atoi(buff.c_str()));
+    }
+    if (values.size() != 2) {
+        this->sendPRIVMSG(receiver, "Invalid range!");
+        return;
+    }
+    if (values.at(0) > values.at(1)) {
+        this->sendPRIVMSG(receiver, "Range must be min:max - not the other way around!");
+        return;
+    }
+
+    // Send answer
+    int result = this->randomNb(values.at(0), values.at(1));
+    std::string msg("Your random number is: ");
+    std::stringstream asStr;
+    asStr << result;
+    msg = msg + asStr.str();
+    this->sendPRIVMSG(receiver, msg);
 }
 
 // ====================================================================================================================
@@ -402,4 +451,13 @@ int Bot::randomNb( const size_t min, const size_t max ) {
     size_t res = rand() % (range + 1);
     res += min;
     return res;
+}
+
+bool Bot::isNumeric( const std::string& tok ) {
+    for (std::string::const_iterator it = tok.begin(); it != tok.end(); ++it) {
+        if ((*it) < '0' || (*it) > '9') {
+            return false;
+        }
+    }
+    return true;
 }
