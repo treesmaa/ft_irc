@@ -22,12 +22,13 @@
 // ====================================================================================================================
 // Constructors & Destructor
 // ====================================================================================================================
-Bot::Bot( void ) : _exit(0), _serverfd(-1), _connected(false), _execName("bot") {}
+Bot::Bot( void ) : _exit(0), _serverfd(-1), _connected(false), _execName("bot") { time(NULL); }
 Bot::Bot ( const char* execName ) : _exit(0), _serverfd(-1), _connected(false) {
     // remove "./" of "./name"
     if (strlen(execName) > 2 && execName[0] == '.' && execName[1] == '/') {
         _execName = &(execName[2]);
     }
+    time(NULL);
 }
 Bot::Bot( const Bot& other ) { *this = other; }
 Bot::~Bot( void ) {
@@ -314,7 +315,7 @@ void Bot::featJoke( const std::string& receiver ) {
         return;
     }
 
-    sendPRIVMSG(receiver, _jokes.at(0));
+    sendPRIVMSG(receiver, _jokes.at(this->randomNb(0, (_jokes.size() - 1))));
 }
 
 // ====================================================================================================================
@@ -384,5 +385,21 @@ std::string Bot::sanitizeToken( const std::string& sender ) {
         res.push_back(*it);
         ++it;
     }
+    return res;
+}
+
+int Bot::randomNb( const size_t min, const size_t max ) {
+    // Handle as error
+    if (min > max) {
+        return -1;
+    }
+
+    else if (min == max) {
+        return min;
+    }
+
+    int range = max - min;
+    size_t res = rand() % (range + 1);
+    res += min;
     return res;
 }

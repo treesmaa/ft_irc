@@ -82,6 +82,7 @@ class Bot {
         std::string tolower      ( const std::string& token );
         const char* checkPort    (const char *str);
         std::string sanitizeToken( const std::string& sender );
+        int         randomNb     ( const size_t min, const size_t max );
 };
 
 #endif // ! BOT_HPP
