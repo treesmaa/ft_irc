@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
             std::stringstream ss(argv[4]);
             std::string buff;
             while(getline(ss, buff, ',')) {
-                if (buff.length() > 0 && buff.at(0) != '&' && buff.at(0) != '#') {
+                if (buff.empty() || (buff.at(0) != '&' && buff.at(0) != '#')) {
                     std::cerr << "channels need to start with '#' or '&': e.g. '#channel'" << std::endl;
                     return 1;
                 }
