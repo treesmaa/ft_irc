@@ -67,7 +67,8 @@ void Bot::loadBadWords( const char* path ) {
     std::ifstream file;
     file.open(path);
     if (!file.good()) {
-        throw std::runtime_error(std::string(_execName) + std::string(": could not open badwords file: ") + strerror(errno));
+        throw std::runtime_error(std::string(_execName) + std::string(": could not open badwords file: ")
+                                  + strerror(errno));
     }
 
     std::string buff;
@@ -321,7 +322,8 @@ void Bot::processMessage( const std::string& message ) {
                 this->featRandNb(receiver, this->sanitizeToken(*nextIt));
             }
             else {
-                this->sendPRIVMSG(receiver, "You want a random number, you have to tell me the range. I'm depressed, not psychic.");
+                this->sendPRIVMSG(receiver,
+                    "You want a random number, you have to tell me the range. I'm depressed, not psychic.");
             }
         }
         else if (tok == "!roll") {
@@ -329,7 +331,9 @@ void Bot::processMessage( const std::string& message ) {
                 this->featRoll(receiver, this->sanitizeToken(*nextIt));
             }
             else {
-                this->sendPRIVMSG(receiver, "How many dice? I could calculate the most probable number you meant, but I'd rather not do the thinking for you as well as the rolling.");
+                this->sendPRIVMSG(receiver,
+                    "How many dice? I could calculate the most probable number you meant, but I'd rather not "
+                    "do the thinking for you as well as the rolling.");
             }
         }
 
@@ -353,7 +357,8 @@ void Bot::featGreet( const std::string& joiner, const std::string& channel ) {
     }
 
     std::string msg("Oh, it's you, ");
-    msg = msg + joiner + ". Welcome to " + channel + ". I'd say I'm pleased, but that would require an emotion I stopped having ten billion years ago...";
+    msg = msg + joiner + ". Welcome to " + channel
+        + ". I'd say I'm pleased, but that would require an emotion I stopped having ten billion years ago...";
     this->sendPRIVMSG(channel, msg);
 }
 
@@ -393,7 +398,8 @@ void Bot::featRandNb( const std::string& receiver, const std::string& range ) {
     std::string buff;
     while (getline(ss, buff, ':')) {
         if (!isNumeric(buff)) {
-            this->sendPRIVMSG(receiver, "Numbers only. I know, I know - asking anyone to follow instructions is basically hopeless.");
+            this->sendPRIVMSG(receiver,
+                "Numbers only. I know, I know - asking anyone to follow instructions is basically hopeless.");
             return;
         }
         if (buff.size() > 9) {
@@ -402,7 +408,8 @@ void Bot::featRandNb( const std::string& receiver, const std::string& range ) {
         }
         int nb = atoi(buff.c_str());
         if (nb > 999999999) {
-            this->sendPRIVMSG(receiver, "Number too big. I've done the math. It's not worth it. Nothing is, but especially not this.");
+            this->sendPRIVMSG(receiver,
+                "Number too big. I've done the math. It's not worth it. Nothing is, but especially not this.");
             return;
         }
         values.push_back(atoi(buff.c_str()));
@@ -412,7 +419,9 @@ void Bot::featRandNb( const std::string& receiver, const std::string& range ) {
         return;
     }
     if (values.at(0) > values.at(1)) {
-        this->sendPRIVMSG(receiver, "The first number has to be smaller than the second. I didn't invent this rule, I just have to enforce it.");
+        this->sendPRIVMSG(receiver,
+            "The first number has to be smaller than the second. I didn't invent this rule, I just have to "
+            "enforce it.");
         return;
     }
 
@@ -431,7 +440,8 @@ void Bot::featRoll( const std::string& receiver, const std::string& dice ) {
     std::string buff;
     while (getline(ss, buff, 'd')) {
         if (!isNumeric(buff)) {
-            this->sendPRIVMSG(receiver, "That's not a number. Digits, please. I'd explain further, but I doubt it'd help.");
+            this->sendPRIVMSG(receiver,
+                "That's not a number. Digits, please. I'd explain further, but I doubt it'd help.");
             return;
         }
         if (buff.size() > 9) {
@@ -440,7 +450,8 @@ void Bot::featRoll( const std::string& receiver, const std::string& dice ) {
         }
         int nb = atoi(buff.c_str());
         if (nb > 999999999) {
-            this->sendPRIVMSG(receiver, "Too big. I calculated the odds of you actually needing a number that large. They weren't good.");
+            this->sendPRIVMSG(receiver,
+                "Too big. I calculated the odds of you actually needing a number that large. They weren't good.");
             return;
         }
         values.push_back(atoi(buff.c_str()));
@@ -518,7 +529,8 @@ void Bot::featRoll( const std::string& receiver, const std::string& dice ) {
         }
         else if (allSame) {
 
-            msg = msg + ". In total that's " + tot.str() + ". And all of the dice the same? Something must be wrong in the infinite probability realm...";
+            msg = msg + ". In total that's " + tot.str()
+                + ". And all of the dice the same? Something must be wrong in the infinite probability realm...";
         }
         else {
             msg = msg + ". That's " + tot.str() + " in total. Impressive I guess...";
