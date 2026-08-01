@@ -18,6 +18,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include <vector>
 #include <poll.h>
 
@@ -45,8 +46,11 @@ Bot::~Bot( void ) {
 Bot& Bot::operator=( const Bot& other ) {
     if (this != &other) {
         _exit = other._exit;
-        _serverfd = other._serverfd;
-        _connected = other._connected;
+        if (_serverfd != -1) {
+            close(_serverfd);
+        }
+        _serverfd = -1;
+        _connected = false;
         _buf = other._buf;
         _badWords = other._badWords;
         _jokes = other._jokes;
@@ -241,7 +245,6 @@ void Bot::processMessage( const std::string& message ) {
 
     while (getline(ss, buffer, ' ')) {
         tokens.push_back(buffer);
-         // std::cout << "tok: " << buffer << std::endl; // TODO: Remove - debug only
     }
 
     std::string sender;
