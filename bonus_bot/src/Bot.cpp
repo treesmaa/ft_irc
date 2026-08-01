@@ -44,7 +44,7 @@ Bot::Bot( const Bot& other ) { *this = other; }
 Bot::~Bot( void ) {
 
     // Say goodbye too all channels
-    for (std::set<std::string>::iterator it = _channels.begin(); it != _channels.end(); ++it) {
+    for (std::set<std::string>::iterator it = _channels.begin(); it != _channels.end() && _connected; ++it) {
         this->sendPRIVMSG(*it, "So long, and thanks for all the fish!");
     }
 
@@ -228,7 +228,9 @@ void Bot::readFromServer( void ) {
         throw std::runtime_error(std::string("recv(): ") + strerror(errno));
     }
     else if (nbytes == 0) {
-        throw std::runtime_error(std::string("recv(): ") + strerror(errno));
+        std::cout << "Server closed the connection." << std::endl;
+        _connected = false;
+        return;
     }
     _buf.append(buf, nbytes);
 }
