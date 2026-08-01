@@ -321,7 +321,7 @@ void Bot::processMessage( const std::string& message ) {
                 this->featRandNb(receiver, this->sanitizeToken(*nextIt));
             }
             else {
-                this->sendPRIVMSG(receiver, "Range missing!");
+                this->sendPRIVMSG(receiver, "You want a random number, you have to tell me the range. I'm depressed, not psychic.");
             }
         }
 
@@ -385,35 +385,34 @@ void Bot::featRandNb( const std::string& receiver, const std::string& range ) {
     std::string buff;
     while (getline(ss, buff, ':')) {
         if (!isNumeric(buff)) {
-            this->sendPRIVMSG(receiver, "Invalid range!");
+            this->sendPRIVMSG(receiver, "Numbers only. I know, I know - asking anyone to follow instructions is basically hopeless.");
             return;
         }
         if (buff.size() > 9) {
-            this-> sendPRIVMSG(receiver, "Number too high!");
+            this-> sendPRIVMSG(receiver, "Too big. Even I have limits, and I have a brain the size of a planet.");
             return;
         }
         int nb = atoi(buff.c_str());
         if (nb > 1000000000) {
-            this->sendPRIVMSG(receiver, "Number too high!");
+            this->sendPRIVMSG(receiver, "Number too big. I've done the math. It's not worth it. Nothing is, but especially not this.");
             return;
         }
         values.push_back(atoi(buff.c_str()));
     }
     if (values.size() != 2) {
-        this->sendPRIVMSG(receiver, "Invalid range!");
+        this->sendPRIVMSG(receiver, "min:max. Two numbers. I don't know why I have to say this.");
         return;
     }
     if (values.at(0) > values.at(1)) {
-        this->sendPRIVMSG(receiver, "Range must be min:max - not the other way around!");
+        this->sendPRIVMSG(receiver, "The first number has to be smaller than the second. I didn't invent this rule, I just have to enforce it.");
         return;
     }
 
     // Send answer
     int result = this->randomNb(values.at(0), values.at(1));
-    std::string msg("Your random number is: ");
     std::stringstream asStr;
     asStr << result;
-    msg = msg + asStr.str();
+    std::string msg = asStr.str() + ". There you go. A brain the size of a planet, and this is what I'm used for.";
     this->sendPRIVMSG(receiver, msg);
 }
 
