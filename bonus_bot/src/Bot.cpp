@@ -382,7 +382,6 @@ void Bot::featMonitor( const std::string& receiver, const std::string& sender,  
         std::string msg("That's the sort of thing that makes me want to lie down in a ditch, ");
         msg = msg + sender + ". Not that anyone asked...";
         this->sendPRIVMSG(receiver, msg);
-        // TODO: Add kick if possible
     }
 }
 
