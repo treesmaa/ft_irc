@@ -24,10 +24,13 @@ enum Numerics {
     ERR_NOORIGIN          = 409,
 
 	//Channel modes
-	RPL_CHANNELMODEIS     = 324,
-	RPL_INVITING          = 341,
-	RPL_WHOREPLY			 = 352,	
-	RPL_WHOISREPLY		 = 311,
+	RPL_CHANNELMODEIS   = 324,
+	RPL_INVITING        = 341,
+	RPL_WHOREPLY		= 352,
+	RPL_ENDOFWHO		= 315,
+	RPL_WHOISUSER		= 311,
+	RPL_ENDOFWHOIS		= 318,
+	RPL_BANNLIST		= 368,
 
     // General errors
     ERR_NOSUCHNICK        = 401,
