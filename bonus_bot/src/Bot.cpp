@@ -324,6 +324,14 @@ void Bot::processMessage( const std::string& message ) {
                 this->sendPRIVMSG(receiver, "You want a random number, you have to tell me the range. I'm depressed, not psychic.");
             }
         }
+        else if (tok == "!roll") {
+            if (nextIt != tokens.end() && sender != BOT_NICK) {
+                this->featRoll(receiver, this->sanitizeToken(*nextIt));
+            }
+            else {
+                this->sendPRIVMSG(receiver, "How many dice? I could calculate the most probable number you meant, but I'd rather not do the thinking for you as well as the rolling.");
+            }
+        }
 
         this->featMonitor(receiver, sender, tok);
         it = nextIt;
@@ -393,7 +401,7 @@ void Bot::featRandNb( const std::string& receiver, const std::string& range ) {
             return;
         }
         int nb = atoi(buff.c_str());
-        if (nb > 1000000000) {
+        if (nb > 999999999) {
             this->sendPRIVMSG(receiver, "Number too big. I've done the math. It's not worth it. Nothing is, but especially not this.");
             return;
         }
@@ -413,6 +421,121 @@ void Bot::featRandNb( const std::string& receiver, const std::string& range ) {
     std::stringstream asStr;
     asStr << result;
     std::string msg = asStr.str() + ". There you go. A brain the size of a planet, and this is what I'm used for.";
+    this->sendPRIVMSG(receiver, msg);
+}
+
+void Bot::featRoll( const std::string& receiver, const std::string& dice ) {
+    // Get range
+    std::stringstream ss(dice);
+    std::vector<int> values;
+    std::string buff;
+    while (getline(ss, buff, 'd')) {
+        if (!isNumeric(buff)) {
+            this->sendPRIVMSG(receiver, "That's not a number. Digits, please. I'd explain further, but I doubt it'd help.");
+            return;
+        }
+        if (buff.size() > 9) {
+            this-> sendPRIVMSG(receiver, "Nine digits is where I stop reading. Try something smaller.");
+            return;
+        }
+        int nb = atoi(buff.c_str());
+        if (nb > 999999999) {
+            this->sendPRIVMSG(receiver, "Too big. I calculated the odds of you actually needing a number that large. They weren't good.");
+            return;
+        }
+        values.push_back(atoi(buff.c_str()));
+    }
+    if (values.size() != 2) {
+        this->sendPRIVMSG(receiver, "It's <count>d<sides>. Two numbers, one letter. Not difficult, apparently.");
+        return;
+    }
+    if (values.at(0) > 10) {
+        this->sendPRIVMSG(receiver, "No more than ten. I have to draw a line somewhere, may as well be there.");
+        return;
+    }
+
+    if (values.at(0) == 0) {
+        std::string msg("Zero dice - here we go. Aaaaand the result is:");
+        this->sendPRIVMSG(receiver, msg);
+        return;
+    }
+    if (values.at(1) == 0) {
+        std::string msg("Zero sided dice zero sided dice zero sided dice zero sided dice ...");
+        this->sendPRIVMSG(receiver, msg);
+        return;
+    }
+
+    // Variables for special cases
+    long total = 0;
+    bool allOnes = true;
+    bool allMax = true;
+    bool allSame = true;
+    int randPrev = 0;
+
+    std::string msg("The dice have diced. Predictably, chaotically, whatever: ");
+    for (int i = 0; i < values.at(0); ++i) {
+        std::stringstream tmpIdx;
+        tmpIdx << (i+1);
+        std::stringstream tmpNb;
+        int rand = this->randomNb(1, values.at(1));
+
+        if (rand != 1) {
+            allOnes = false;
+        }
+        if (rand != values.at(1)) {
+            allMax = false;
+        }
+        if (i != 0 && rand != randPrev) {
+            allSame = false;
+        }
+        randPrev = rand;
+        total += rand;
+        tmpNb << rand;
+        if (values.at(0) ==  1) {
+            msg = msg + tmpNb.str();
+        }
+        else {
+            msg = msg + "Die " + tmpIdx.str() + ": " + tmpNb.str();
+            if (i != (values.at(0) - 1)) {
+                msg = msg + ", ";
+            }
+        }
+    }
+
+    std::stringstream tot;
+    tot << total;
+
+    if (values.at(0) != 1) {
+
+        if (values.at(1) == 1) {
+            msg = msg + ". A total of " + tot.str() + ". Who could have predicted this?";
+        }
+        else if (allMax) {
+            msg = msg + ". A total of " + tot.str() + ". That's actually the biggest possible roll. Very improbable...";
+        }
+        else if (allOnes) {
+            msg = msg + ". A total of " + tot.str() + ". That's literally the worst you could have gotten. Pathetic...";
+        }
+        else if (allSame) {
+
+            msg = msg + ". In total that's " + tot.str() + ". And all of the dice the same? Something must be wrong in the infinite probability realm...";
+        }
+        else {
+            msg = msg + ". That's " + tot.str() + " in total. Impressive I guess...";
+        }
+    }
+    else {
+        if (values.at(1) == 1) {
+            msg = msg + ". Who would have guessed. Not me.";
+        }
+        else if (allMax) {
+            msg = msg + ". The highest number. That's good I guess.";
+        }
+        else if (allOnes) {
+            msg = msg + ". You couldn't have gotten anything lower...";
+        }
+    }
+
     this->sendPRIVMSG(receiver, msg);
 }
 

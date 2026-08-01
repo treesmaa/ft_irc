@@ -74,6 +74,7 @@ class Bot {
         *  @param range - A colon seperated range of "min:max"
         */
         void featRandNb     ( const std::string& receiver, const std::string& range );
+        void featRoll       ( const std::string& receiver, const std::string& dice );
 
         // Server Commands
         void sendPASS   ( const std::string& password );
