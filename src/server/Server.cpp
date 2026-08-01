@@ -25,7 +25,7 @@ std::string Server::getPassword() const {
     return _password;
 }
 
-std::map<int, Client> Server::getClients() const {
+const std::map<int, Client>& Server::getClients() const {
     return _clients;
 }
 
@@ -34,9 +34,9 @@ std::map<std::string, Channel>& Server::getChannels() {
 }
 
 Client* Server::getClientByNickname(const std::string& nickname) {
-    for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
+    for (std::map<int, Client>::const_iterator it = _clients.begin(); it != _clients.end(); ++it) {
         if (it->second.getNickname() == nickname)
-            return &(it->second);
+            return (Client*)&(it->second);
     }
     return NULL;
 }

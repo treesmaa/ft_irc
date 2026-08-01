@@ -36,7 +36,7 @@ class Server {
 	
 		//getters
         std::string				    getPassword() const;
-        std::map<int, Client>	    getClients() const;
+        const std::map<int, Client>&	    getClients() const;
         std::map<std::string, Channel>& getChannels();
         Client*                     getClientByNickname(const std::string& nickname);
         std::string				    getCreationDate() const;

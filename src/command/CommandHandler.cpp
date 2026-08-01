@@ -864,7 +864,7 @@ void CommandHandler::handleCAP(s_msg *message, Client& client) {
 		_server.sendToClient(client.getFd(), ":" SERVER " CAP * LS :" CRLF);
 }
 
-static std::string makeWhoReply(Client& requester, Client& target, const std::string& channel) {
+static std::string makeWhoReply(Client& requester, const Client& target, const std::string& channel) {
 	std::ostringstream oss;
 	oss << ":" << SERVER << " " << RPL_WHOREPLY << " " << requester.getNickname()
 		<< " " << channel << " " << target.getUsername() << " "
@@ -905,19 +905,19 @@ void CommandHandler::handleWho(s_msg *message, Client& client) {
 	}
 
 	const std::set<int>& members = channelIt->second.getMembers();
-	std::map<int, Client> clients = _server.getClients();
+	const std::map<int, Client>& clients = _server.getClients();
 
 	for (std::set<int>::const_iterator memberIt = members.begin();
 		 memberIt != members.end();
 		 ++memberIt) {
 
-		std::map<int, Client>::iterator clientIt =
+		std::map<int, Client>::const_iterator clientIt =
 			clients.find(*memberIt);
 
 		if (clientIt == clients.end())
 			continue;
 
-		Client& targetClient = clientIt->second;
+		const Client& targetClient = clientIt->second;
 
 		_server.sendToClient(
 			client.getFd(),
