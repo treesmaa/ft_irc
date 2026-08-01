@@ -135,13 +135,16 @@ void Bot::join( const std::string& channel ) {
 }
 
 int Bot::run( void ) {
-    struct pollfd pfd;
-    pfd.fd = _serverfd;
-    pfd.events = POLLIN;
+    struct pollfd pfds[2];
+    pfds[0].fd = _serverfd;
+    pfds[0].events = POLLIN;
+    pfds[1].fd = STDIN_FILENO;
+    pfds[1].events = POLLIN;
 
     while (!g_stop && _connected) {
-        pfd.revents = 0;
-        int ret = poll(&pfd, 1, -1);
+        pfds[0].revents = 0;
+        pfds[1].revents = 0;
+        int ret = poll(pfds, 2, -1);
 
         if (ret < 0) {
             if (errno == EINTR) {
@@ -151,19 +154,29 @@ int Bot::run( void ) {
             throw std::runtime_error(std::string("poll(): ") + strerror(errno));
         }
 
-        if (pfd.revents & POLLERR) {
+        if (pfds[0].revents & POLLERR) {
             _connected = false;
             throw std::runtime_error(std::string("poll(): ") + strerror(errno));
         }
 
-        else if (pfd.revents & POLLHUP) {
+        else if (pfds[0].revents & POLLHUP) {
             _connected = false;
             throw std::runtime_error(std::string("poll(): ") + strerror(errno));
         }
 
-        else if (pfd.revents & POLLIN) {
+        else if (pfds[0].revents & POLLIN) {
             readFromServer();
             processBuffer();
+        }
+
+        if (pfds[1].revents & POLLIN) {
+            std::string input;
+            std::getline(std::cin, input);
+
+            if (input == "QUIT" || input == "quit" || input == "exit" || input == "EXIT") {
+                std::cout << "Bot shutdown requested." << std::endl;
+                g_stop = 1;
+            }
         }
     }
     return _exit;
