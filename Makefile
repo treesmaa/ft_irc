@@ -54,13 +54,24 @@ $(OBJS_DIR)/%.o: src/%.cpp
 debug: CXXFLAGS += -g -DDEBUG
 debug: fclean $(NAME)
 
+# ---------------- BONUS ----------------
+
+BONUS_DIR := bonus_bot
+BONUS_NAME := marvin
+
+bonus:
+	$(MAKE) -C $(BONUS_DIR) NAME=$(BONUS_NAME)
+	ln -sf $(BONUS_DIR)/$(BONUS_NAME) $(BONUS_NAME)
+
 # ---------------- CLEAN ----------------
 
 clean:
 	rm -rf $(OBJS_DIR)
+	$(MAKE) -C $(BONUS_DIR) clean
 
 fclean: clean
-	rm -f $(NAME)
+	rm -f $(NAME) $(BONUS_NAME)
+	$(MAKE) -C $(BONUS_DIR) fclean NAME=$(BONUS_NAME)
 
 re: fclean all
 
@@ -68,4 +79,4 @@ re: fclean all
 
 -include $(DEPS)
 
-.PHONY: all debug clean fclean re
+.PHONY: all debug bonus clean fclean re
