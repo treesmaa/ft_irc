@@ -1,64 +1,98 @@
 ## Bonus: Bot
 
-As a bonus we implemented a bot for this server. It pretty much acts as an independet client (its an extra binary) that runs on the server
+As a bonus, this project includes an IRC bot: an independent client binary that connects to the server the same way any user would, rather than a feature built into the server itself. From the server's point of view, the bot is indistinguishable from a real user — the same connection, registration, and message flow apply.
 
-### Usage
+The bot is a nod to Marvin, the Paranoid Android from *The Hitchhiker's Guide to the Galaxy*: hugely capable, thoroughly unimpressed with the tasks it's given, and helpful anyway. Its replies lean into that voice throughout.
 
-```bash
-./marvin <network> <port> <password> optinal:<#chan1,#chan2,...>
+### Features
+
+#### Automatic
+
+| Trigger | Behavior |
+|---------|----------|
+| Invited to a channel | Joins the channel and greets everyone in it. |
+| A user joins a channel the bot is in | Greets the new user. |
+| A banned word is said where the bot can read it | Responds with a complaint. |
+| The bot shuts down | Says goodbye in every channel it is currently in before disconnecting. |
+
+#### Prompted
+
+| Command | Description |
+|---------|-------------|
+| `!time` | Reports the current time. |
+| `!joke` | Tells a random joke from the bot's joke list. |
+| `!panic` | Responds with `don't`. |
+| `!answer` | Responds with `42`. |
+| `!rand <min:max>` | Returns a random number in the given range (0 to 999,999,999). |
+| `!roll <count>d<sides>` | Rolls up to 10 dice with up to 999,999,999 sides each, and reports each result and the total. |
+
+### Architecture
+
+#### Overview
+
+The bot is a single `Bot` class that connects to the server as an ordinary client over a non-blocking TCP socket. It performs the standard registration handshake (`PASS`, `NICK`, `USER`) and then reads from the server using `poll()`, following the same event-driven approach as the server itself.
+
+#### Message Flow
+
+1. `poll()` reports that the socket is ready for reading.
+2. Incoming bytes are appended to an internal buffer.
+3. Complete lines terminated with `CRLF` are extracted from the buffer.
+4. Each line is tokenized and checked against server events (`PING`, `JOIN`, `INVITE`, ...) and bot prompts (`!time`, `!roll`, ...).
+5. A match triggers a response, sent back to the server as a raw IRC command (`PRIVMSG`, `JOIN`, `PONG`, ...).
+
+### Project Structure
+
+```text
+.
+├── Makefile
+├── README.md
+├── includes
+│   └── Bot.hpp
+├── src
+│   ├── Bot.cpp
+│   └── main.cpp
+└── texts
+    ├── bad.txt
+    └── jokes.txt
 ```
-The basic usage will connect the bot to the server as a client and is ready to be invited. The server does not know anything about it. For it its just another client
 
-It optionally allows as another argument a comma seperated list of channels the bot will join. If they don't exist the bot automatically becomes moderator. If they do and they are password protected the bot will just not connect to them but stay alive
+### Instructions
 
-### Automatic Features
+#### Requirements
 
-#### Auto join on invite
+- A C++98-compatible compiler
+- `make`
+- A running instance of this ft_irc server (or any RFC 1459-compatible IRC server) to connect to
 
-Inviting the bot will lead to him joining the channel and greet everyone around
+#### Building and Running
 
-#### Auto greet new users
+**Build the bot**
 
-Whenever a new user joins a channel in which the bot can read, the bot will great the new user with a message
+```sh
+make
+```
 
-#### Moderate Bad Words
+To build with debug flags:
 
-The bot takes a list of bad words that are considered bad words. Saying these where the bot can read it will lead to an angry respose or if possible to a kick.
+```sh
+make debug
+```
 
-### Prompted Features
+**Start the bot**
 
-#### Random number
+```sh
+./marvin <network> <port> <password> [#channel1,#channel2,...]
+```
 
-Prompt: `!rand <min:max>`
+**Example**
 
-The user can request a random number in a range between 0 and 999999999.
+```sh
+./marvin localhost 6667 mypassword "#general,#random"
+```
 
-#### Rolling dice
+* **network**: hostname or IP address of the IRC server to connect to
+* **port**: port the IRC server is listening on
+* **password**: the server's connection password
+* **channels** *(optional)*: a comma-separated list of channels to join on startup; each name must start with `#` or `&`, and the whole list must be quoted so the shell passes it as a single argument. If a channel doesn't exist yet, the bot becomes its operator, like any client that creates a channel. If it exists and is password-protected, the bot simply skips it and keeps running.
 
-Prompt: `!roll <count>d<sides>`
-
-The user can request up to 10 dice being rolled with up to 999999999 sides.
-
-#### Time
-
-Prompt: `!time`
-
-The user can request the current time
-
-#### Jokes
-
-Prompt: `!joke`
-
-The user can request the bot to tell a joke
-
-#### Panic
-
-Prompt: `!panic`
-
-The bot will remember the user not to panic! (responds with `don't`)
-
-#### Answer
-
-Prompt: `!answer`
-
-In case the user forgets about the answer to the universe this prompt allows them to be remembered (responds with `42`)
+The bot can also be added to a channel later, at any time, by inviting it — no restart required.
