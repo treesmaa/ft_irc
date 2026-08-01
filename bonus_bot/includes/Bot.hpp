@@ -30,8 +30,8 @@ extern volatile sig_atomic_t g_stop; // defined in main.cpp
 class Bot {
     public:
         // Constructors & Destructors
-        Bot( void );
-        Bot( const Bot& );
+        Bot ( void );
+        Bot ( const Bot& );
         ~Bot( void );
 
         // Operators
@@ -42,7 +42,7 @@ class Bot {
         void connect     ( const std::string& network, const std::string& port);
         void login       ( const std::string& password );
         void join        ( const std::string& channel );
-        int run          ( void ); // Essiantially the main loop
+        int  run         ( void ); // Essiantially the main loop
 
     private:
         // Private Variables
@@ -53,13 +53,9 @@ class Bot {
         std::set<std::string>   _badWords;
 
         // Private Member Functions
-        std::string tolower( const std::string& token );
-        const char* checkPort(const char *str);
-        void sendToServer(const std::string& message);
+        void sendToServer  (const std::string& message);
         void readFromServer( void );
-        std::string sanitizeCRLF( const std::string& str );
-        std::string sanitizeToken( const std::string& sender );
-        void processBuffer( void );
+        void processBuffer ( void );
         void processMessage( const std::string& message );
 
         // Bot Commands
@@ -75,6 +71,11 @@ class Bot {
                           const std::string& unused,   const std::string& msg );
         void sendJOIN   ( const std::string& channel);
         void sendPRIVMSG( const std::string& receiver, const std::string& in_msg );
+
+        // Helper Functions
+        std::string tolower      ( const std::string& token );
+        const char* checkPort    (const char *str);
+        std::string sanitizeToken( const std::string& sender );
 };
 
 #endif // ! BOT_HPP

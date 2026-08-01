@@ -129,21 +129,6 @@ int Bot::run( void ) {
 // ====================================================================================================================
 // Private Member Functions
 // ====================================================================================================================
-std::string Bot::tolower( const std::string& token ) {
-    std::string res = token;
-    for (std::string::iterator it = res.begin(); it != res.end(); ++it) {
-        (*it) = std::tolower(*it);
-    }
-    return res;
-}
-
-const char* Bot::checkPort(const char *str) {
-    int asInt = std::atoi(str);
-    if (asInt < 1024 || asInt > 65535)
-        throw std::runtime_error("invalid port number");
-    return str;
-}
-
 void Bot::sendToServer(const std::string& message) {
     if (_serverfd < 0)
         return;
@@ -173,30 +158,7 @@ void Bot::readFromServer( void ) {
     _buf.append(buf, nbytes);
 }
 
-std::string Bot::sanitizeCRLF( const std::string& str ) {
-    std::string clean;
 
-    for (std::string::const_iterator it = str.begin(); it != str.end(); ++it) {
-        if (*it != '\n' && *it != '\r') {
-            clean.push_back(*it);
-        }
-    }
-    return clean;
-}
-
-std::string Bot::sanitizeToken( const std::string& sender ) {
-    std::string res = "";
-    std::string::const_iterator it = sender.begin();
-    if (sender.length() > 0 && sender.at(0) == ':') {
-        ++it;
-    }
-    while (it != sender.end() && (*it) != ' '  && (*it) != '!'
-                              && (*it) != '\r' && (*it) != '\n') {
-        res.push_back(*it);
-        ++it;
-    }
-    return res;
-}
 
 void Bot::processBuffer( void ) {
     size_t delimPos = 0;
@@ -271,7 +233,7 @@ void Bot::processMessage( const std::string& message ) {
 
     // Just go through the rest of the tokens lazily and look for bot cmds
     while (it != tokens.end()) {
-        std::string tok = this->sanitizeCRLF(*it);
+        std::string tok = this->sanitizeToken(*it);
 
         if (tok == "!time") {
             sendPRIVMSG(receiver, "Its currently");
@@ -302,7 +264,7 @@ void Bot::featGreet( const std::string& joiner, const std::string& channel ) {
 }
 
 void Bot::featAutoJoin( const std::string& channel ) {
-    std::string chan = this->sanitizeCRLF(channel);
+    std::string chan = this->sanitizeToken(channel);
     this->sendJOIN(chan);
     std::string greet("Hello ");
     greet = greet + chan + ", i hope everyone is doing great today!";
@@ -350,4 +312,36 @@ void Bot::sendPRIVMSG( const std::string& receiver, const std::string& in_msg ) 
     std::string msg("PRIVMSG ");
     msg = msg + receiver + " :" + in_msg + CRLF;
     this->sendToServer(msg);
+}
+
+// ====================================================================================================================
+// Helper Functions
+// ====================================================================================================================
+std::string Bot::tolower( const std::string& token ) {
+    std::string res = token;
+    for (std::string::iterator it = res.begin(); it != res.end(); ++it) {
+        (*it) = std::tolower(*it);
+    }
+    return res;
+}
+
+const char* Bot::checkPort(const char *str) {
+    int asInt = std::atoi(str);
+    if (asInt < 1024 || asInt > 65535)
+        throw std::runtime_error("invalid port number");
+    return str;
+}
+
+std::string Bot::sanitizeToken( const std::string& sender ) {
+    std::string res = "";
+    std::string::const_iterator it = sender.begin();
+    if (sender.length() > 0 && sender.at(0) == ':') {
+        ++it;
+    }
+    while (it != sender.end() && (*it) != ' '  && (*it) != '!'
+                              && (*it) != '\r' && (*it) != '\n') {
+        res.push_back(*it);
+        ++it;
+    }
+    return res;
 }
