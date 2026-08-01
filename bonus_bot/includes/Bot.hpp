@@ -81,6 +81,7 @@ class Bot {
                           const std::string& unused,   const std::string& msg );
         void sendJOIN   ( const std::string& channel);
         void sendPRIVMSG( const std::string& receiver, const std::string& in_msg );
+        void sendPONG   ( const std::string& token );
 
         // Helper Functions
         std::string tolower      ( const std::string& token );

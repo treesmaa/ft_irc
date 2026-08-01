@@ -255,7 +255,13 @@ void Bot::processMessage( const std::string& message ) {
     }
 
     if (it != tokens.end()) {
-        cmd = *it;
+        cmd = this->sanitizeToken(*it);
+
+        if (sender == "PING") {
+            this->sendToServer(cmd);
+            return;
+        }
+
         if (cmd == "464") {
             throw std::runtime_error(std::string("incorrect password"));
         }
@@ -433,6 +439,12 @@ void Bot::sendJOIN( const std::string& channel ) {
 void Bot::sendPRIVMSG( const std::string& receiver, const std::string& in_msg ) {
     std::string msg("PRIVMSG ");
     msg = msg + receiver + " :" + in_msg + CRLF;
+    this->sendToServer(msg);
+}
+
+void Bot::sendPONG( const std::string& token ) {
+    std::string msg("PONG ");
+    msg = msg + token + CRLF;
     this->sendToServer(msg);
 }
 
