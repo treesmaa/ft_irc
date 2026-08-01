@@ -60,23 +60,17 @@ The bot is a single `Bot` class that connects to the server as an ordinary clien
 
 #### Requirements
 
-- A C++98-compatible compiler
-- `make`
-- A running instance of this ft_irc server (or any RFC 1459-compatible IRC server) to connect to
+Same as the server: a C++98-compatible compiler, `make`, and a Unix-like environment. The bot also needs an IRC server to connect to — this one, or any other RFC 1459-compatible server.
 
 #### Building and Running
 
-**Build the bot**
+The bot is built by the same top-level `Makefile` as the server, from the project root:
 
 ```sh
-make
+make bonus
 ```
 
-To build with debug flags:
-
-```sh
-make debug
-```
+This builds the bot from its own Makefile in `bonus_bot/` and links `./marvin` next to `./ircserv` at the project root. `make clean` and `make fclean` clean up the bot's build artifacts too.
 
 **Start the bot**
 
