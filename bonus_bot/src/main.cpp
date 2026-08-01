@@ -6,6 +6,8 @@
 #include <Bot.hpp>
 #include <vector>
 
+#define BW_PATH "texts/bad.txt"
+
 volatile sig_atomic_t g_stop = 0;
 
 void signalHandler(int signum) {
@@ -54,6 +56,7 @@ int main(int argc, char **argv) {
         }
 
         Bot bot;
+        bot.loadBadWords(BW_PATH);
         bot.connect(argv[1], argv[2]); // -> no check, throws
         bot.login(argv[3]);
         for (std::vector<std::string>::iterator it = channels.begin(); it != channels.end(); ++it) {

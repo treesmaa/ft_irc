@@ -2,9 +2,11 @@
 
 #include <alloca.h>
 #include <arpa/inet.h>
+#include <cctype>
 #include <cerrno>
 #include <cstddef>
 #include <ctime>
+#include <fstream>
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
@@ -42,6 +44,21 @@ Bot& Bot::operator=( const Bot& other ) {
 // ====================================================================================================================
 // Public methods
 // ====================================================================================================================
+void Bot::loadBadWords( const char* path ) {
+    std::ifstream file;
+    file.open(path);
+    if (!file.good()) {
+        throw std::runtime_error(std::string("could not open badwords file: ") + strerror(errno));
+    }
+
+    std::string buff;
+    while (getline(file, buff, '\n')) {
+        _badWords.insert(this->tolower(buff));
+    }
+
+    file.close();
+}
+
 void Bot::connect( const std::string& network, const std::string& port) {
     struct addrinfo hints, *res;
 
@@ -112,6 +129,14 @@ int Bot::run( void ) {
 // ====================================================================================================================
 // Private Member Functions
 // ====================================================================================================================
+std::string Bot::tolower( const std::string& token ) {
+    std::string res = token;
+    for (std::string::iterator it = res.begin(); it != res.end(); ++it) {
+        (*it) = std::tolower(*it);
+    }
+    return res;
+}
+
 const char* Bot::checkPort(const char *str) {
     int asInt = std::atoi(str);
     if (asInt < 1024 || asInt > 65535)
@@ -258,6 +283,7 @@ void Bot::processMessage( const std::string& message ) {
             sendPRIVMSG(receiver, "42");
         }
 
+        this->featMonitor(receiver, sender, tok);
         ++it;
     }
 }
@@ -281,6 +307,15 @@ void Bot::featAutoJoin( const std::string& channel ) {
     std::string greet("Hello ");
     greet = greet + chan + ", i hope everyone is doing great today!";
     this->sendPRIVMSG(chan, greet);
+}
+
+void Bot::featMonitor( const std::string& receiver, const std::string& sender,  const std::string& token ) {
+    if (_badWords.find(this->tolower(token)) != _badWords.end()) {
+        std::string msg("We don't usually say such disgusting things around here ");
+        msg = msg + sender + " ...";
+        this->sendPRIVMSG(receiver, msg);
+        // TODO: Add kick if possible
+    }
 }
 
 // ====================================================================================================================
