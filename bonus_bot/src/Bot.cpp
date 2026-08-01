@@ -45,7 +45,13 @@ Bot::~Bot( void ) {
 Bot& Bot::operator=( const Bot& other ) {
     if (this != &other) {
         _exit = other._exit;
+        _serverfd = other._serverfd;
         _connected = other._connected;
+        _buf = other._buf;
+        _badWords = other._badWords;
+        _jokes = other._jokes;
+        _execName = other._execName;
+ 
     }
     return (*this);
 }
