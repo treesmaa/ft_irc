@@ -31,7 +31,13 @@ The bot takes a list of bad words that are considered bad words. Saying these wh
 
 Prompt: `!rand <min:max>`
 
-The user can request a random number in a range between 0 and 1000000000.
+The user can request a random number in a range between 0 and 999999999.
+
+#### Rolling dice
+
+Prompt: `!roll <count>d<sides>`
+
+The user can request up to 10 dice being rolled with up to 999999999 sides.
 
 #### Time
 
