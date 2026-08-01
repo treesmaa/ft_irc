@@ -24,13 +24,13 @@
 // ====================================================================================================================
 // Constructors & Destructor
 // ====================================================================================================================
-Bot::Bot( void ) : _exit(0), _serverfd(-1), _connected(false), _execName("bot") { time(NULL); }
+Bot::Bot( void ) : _exit(0), _serverfd(-1), _connected(false), _execName("bot") { srand(time(NULL)); }
 Bot::Bot ( const char* execName ) : _exit(0), _serverfd(-1), _connected(false) {
     // remove "./" of "./name"
     if (strlen(execName) > 2 && execName[0] == '.' && execName[1] == '/') {
         _execName = &(execName[2]);
     }
-    time(NULL);
+    srand(time(NULL));
 }
 Bot::Bot( const Bot& other ) { *this = other; }
 Bot::~Bot( void ) {
