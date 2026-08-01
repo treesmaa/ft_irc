@@ -59,7 +59,7 @@ debug: fclean $(NAME)
 BONUS_DIR := bonus_bot
 BONUS_NAME := marvin
 
-bonus:
+bonus: all
 	$(MAKE) -C $(BONUS_DIR) NAME=$(BONUS_NAME)
 	ln -sf $(BONUS_DIR)/$(BONUS_NAME) $(BONUS_NAME)
 
