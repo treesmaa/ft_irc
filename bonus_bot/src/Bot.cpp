@@ -35,6 +35,13 @@ Bot::Bot ( const char* execName ) : _exit(0), _serverfd(-1), _connected(false) {
 }
 Bot::Bot( const Bot& other ) { *this = other; }
 Bot::~Bot( void ) {
+
+    // Say goodbye too all channels
+    std::vector<std::string> chanVec(_channels.begin(), _channels.end());
+    for (std::vector<std::string>::iterator it = chanVec.begin(); it != chanVec.end(); ++it) {
+        this->sendPRIVMSG(*it, "So long, and thanks for all the fish!");
+    }
+
     if (_serverfd != -1) {
         close(_serverfd);
     }
@@ -49,13 +56,13 @@ Bot& Bot::operator=( const Bot& other ) {
         if (_serverfd != -1) {
             close(_serverfd);
         }
+        _channels.clear(); // no-op if empty
         _serverfd = -1;
         _connected = false;
         _buf = other._buf;
         _badWords = other._badWords;
         _jokes = other._jokes;
         _execName = other._execName;
- 
     }
     return (*this);
 }
@@ -153,6 +160,7 @@ void Bot::login( const std::string& password ) {
 }
 
 void Bot::join( const std::string& channel ) {
+    _channels.insert(channel);
     this->sendJOIN(channel);
 }
 

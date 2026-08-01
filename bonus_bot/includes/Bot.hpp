@@ -54,6 +54,7 @@ class Bot {
         bool                     _connected;
         std::string              _buf;
         std::set<std::string>    _badWords;
+        std::set<std::string>    _channels;
         std::vector<std::string> _jokes;
         std::string              _execName;
 
