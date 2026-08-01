@@ -40,8 +40,6 @@ class Bot {
         Bot& operator=( const Bot& );
 
         // Public Methods
-        void loadBadWords( const char* path );
-        void loadJokes   ( const char* path );
         void connect     ( const std::string& network, const std::string& port);
         void login       ( const std::string& password );
         void join        ( const std::string& channel );
@@ -59,7 +57,9 @@ class Bot {
         std::string              _execName;
 
         // Private Member Functions
-        void sendToServer  (const std::string& message);
+        void loadBadWords  ( void );
+        void loadJokes     ( void );
+        void sendToServer  ( const std::string& message);
         void readFromServer( void );
         void processBuffer ( void );
         void processMessage( const std::string& message );

@@ -47,13 +47,12 @@ The bot is a single `Bot` class that connects to the server as an ordinary clien
 ├── Makefile
 ├── README.md
 ├── includes
-│   └── Bot.hpp
-├── src
-│   ├── Bot.cpp
-│   └── main.cpp
-└── texts
-    ├── bad.txt
-    └── jokes.txt
+│   ├── BadWords.hpp
+│   ├── Bot.hpp
+│   └── Jokes.hpp
+└── src
+    ├── Bot.cpp
+    └── main.cpp
 ```
 
 ### Instructions

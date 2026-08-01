@@ -1,4 +1,6 @@
 #include "Bot.hpp"
+#include "BadWords.hpp"
+#include "Jokes.hpp"
 
 #include <alloca.h>
 #include <arpa/inet.h>
@@ -6,7 +8,6 @@
 #include <cerrno>
 #include <cstddef>
 #include <ctime>
-#include <fstream>
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
@@ -25,13 +26,19 @@
 // ====================================================================================================================
 // Constructors & Destructor
 // ====================================================================================================================
-Bot::Bot( void ) : _exit(0), _serverfd(-1), _connected(false), _execName("bot") { srand(time(NULL)); }
+Bot::Bot( void ) : _exit(0), _serverfd(-1), _connected(false), _execName("bot") {
+    srand(time(NULL));
+    this->loadBadWords();
+    this->loadJokes();
+}
 Bot::Bot ( const char* execName ) : _exit(0), _serverfd(-1), _connected(false) {
     // remove "./" of "./name"
     if (strlen(execName) > 2 && execName[0] == '.' && execName[1] == '/') {
         _execName = &(execName[2]);
     }
     srand(time(NULL));
+    this->loadBadWords();
+    this->loadJokes();
 }
 Bot::Bot( const Bot& other ) { *this = other; }
 Bot::~Bot( void ) {
@@ -69,42 +76,6 @@ Bot& Bot::operator=( const Bot& other ) {
 // ====================================================================================================================
 // Public methods
 // ====================================================================================================================
-void Bot::loadBadWords( const char* path ) {
-    std::ifstream file;
-    file.open(path);
-    if (!file.good()) {
-        throw std::runtime_error(std::string(_execName) + std::string(": could not open badwords file: ")
-                                  + strerror(errno));
-    }
-
-    std::string buff;
-    while (getline(file, buff, '\n')) {
-        _badWords.insert(this->tolower(buff));
-    }
-
-    file.close();
-}
-
-void Bot::loadJokes( const char* path ) {
-    std::ifstream file;
-    file.open(path);
-    if (!file.good()) {
-        std::cout << _execName << ": jokes could not be loaded: " << strerror(errno) << std::endl;
-        return;
-    }
-
-    std::string buff;
-    while (getline(file, buff, '\n')) {
-        if (buff != "" && buff.at(0) != '#' && buff.length() < 510) {
-            _jokes.push_back(this->tolower(buff));
-        }
-    }
-    if (_jokes.empty()) {
-        std::cout << _execName << ": joke file empty. no jokes have been loaded" << std::endl;
-    }
-    file.close();
-}
-
 void Bot::connect( const std::string& network, const std::string& port) {
     struct addrinfo hints, *res;
 
@@ -201,6 +172,20 @@ int Bot::run( void ) {
 // ====================================================================================================================
 // Private Member Functions
 // ====================================================================================================================
+void Bot::loadBadWords( void ) {
+    size_t count = sizeof(kBadWords) / sizeof(kBadWords[0]);
+    for (size_t i = 0; i < count; ++i) {
+        _badWords.insert(this->tolower(kBadWords[i]));
+    }
+}
+
+void Bot::loadJokes( void ) {
+    size_t count = sizeof(kJokes) / sizeof(kJokes[0]);
+    for (size_t i = 0; i < count; ++i) {
+        _jokes.push_back(kJokes[i]);
+    }
+}
+
 void Bot::sendToServer(const std::string& message) {
     if (_serverfd < 0)
         return;
