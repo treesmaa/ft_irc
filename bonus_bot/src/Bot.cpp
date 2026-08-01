@@ -258,7 +258,7 @@ void Bot::processMessage( const std::string& message ) {
         cmd = this->sanitizeToken(*it);
 
         if (sender == "PING") {
-            this->sendToServer(cmd);
+            this->sendPONG(cmd);
             return;
         }
 
