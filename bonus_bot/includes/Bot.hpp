@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <string>
 #include <set>
+#include <vector>
 
 extern volatile sig_atomic_t g_stop; // defined in main.cpp
 
@@ -31,6 +32,7 @@ class Bot {
     public:
         // Constructors & Destructors
         Bot ( void );
+        Bot ( const char* execName );
         Bot ( const Bot& );
         ~Bot( void );
 
@@ -39,6 +41,7 @@ class Bot {
 
         // Public Methods
         void loadBadWords( const char* path );
+        void loadJokes   ( const char* path );
         void connect     ( const std::string& network, const std::string& port);
         void login       ( const std::string& password );
         void join        ( const std::string& channel );
@@ -46,11 +49,13 @@ class Bot {
 
     private:
         // Private Variables
-        int                     _exit;      // to retreive exit status
-        int                     _serverfd;
-        bool                    _connected;
-        std::string             _buf;
-        std::set<std::string>   _badWords;
+        int                      _exit;      // to retreive exit status
+        int                      _serverfd;
+        bool                     _connected;
+        std::string              _buf;
+        std::set<std::string>    _badWords;
+        std::vector<std::string> _jokes;
+        std::string              _execName;
 
         // Private Member Functions
         void sendToServer  (const std::string& message);
@@ -63,6 +68,7 @@ class Bot {
         void featAutoJoin( const std::string& channel );
         void featMonitor ( const std::string& reveicer, const std::string& sender,
                            const std::string& token );
+        void featJoke( const std::string& receiver );
 
         // Server Commands
         void sendPASS   ( const std::string& password );

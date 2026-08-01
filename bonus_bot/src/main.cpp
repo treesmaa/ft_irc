@@ -6,7 +6,8 @@
 #include <Bot.hpp>
 #include <vector>
 
-#define BW_PATH "texts/bad.txt"
+#define BW_PATH   "texts/bad.txt"
+#define JOKE_PATH "texts/jokes.txt"
 
 volatile sig_atomic_t g_stop = 0;
 
@@ -55,8 +56,9 @@ int main(int argc, char **argv) {
             }
         }
 
-        Bot bot;
+        Bot bot(argv[0]);
         bot.loadBadWords(BW_PATH);
+        bot.loadJokes(JOKE_PATH);
         bot.connect(argv[1], argv[2]); // -> no check, throws
         bot.login(argv[3]);
         for (std::vector<std::string>::iterator it = channels.begin(); it != channels.end(); ++it) {

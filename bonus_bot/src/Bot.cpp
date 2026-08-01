@@ -22,7 +22,13 @@
 // ====================================================================================================================
 // Constructors & Destructor
 // ====================================================================================================================
-Bot::Bot( void ) : _exit(0), _serverfd(-1), _connected(false) {}
+Bot::Bot( void ) : _exit(0), _serverfd(-1), _connected(false), _execName("bot") {}
+Bot::Bot ( const char* execName ) : _exit(0), _serverfd(-1), _connected(false) {
+    // remove "./" of "./name"
+    if (strlen(execName) > 2 && execName[0] == '.' && execName[1] == '/') {
+        _execName = &(execName[2]);
+    }
+}
 Bot::Bot( const Bot& other ) { *this = other; }
 Bot::~Bot( void ) {
     if (_serverfd != -1) {
@@ -48,7 +54,7 @@ void Bot::loadBadWords( const char* path ) {
     std::ifstream file;
     file.open(path);
     if (!file.good()) {
-        throw std::runtime_error(std::string("could not open badwords file: ") + strerror(errno));
+        throw std::runtime_error(std::string(_execName) + std::string(": could not open badwords file: ") + strerror(errno));
     }
 
     std::string buff;
@@ -56,6 +62,26 @@ void Bot::loadBadWords( const char* path ) {
         _badWords.insert(this->tolower(buff));
     }
 
+    file.close();
+}
+
+void Bot::loadJokes( const char* path ) {
+    std::ifstream file;
+    file.open(path);
+    if (!file.good()) {
+        std::cout << _execName << ": jokes could not be loaded: " << strerror(errno) << std::endl;
+        return;
+    }
+
+    std::string buff;
+    while (getline(file, buff, '\n')) {
+        if (buff != "" && buff.at(0) != '#' && buff.length() < 510) {
+            _jokes.push_back(this->tolower(buff));
+        }
+    }
+    if (_jokes.empty()) {
+        std::cout << _execName << ": joke file empty. no jokes have been loaded" << std::endl;
+    }
     file.close();
 }
 
@@ -158,8 +184,6 @@ void Bot::readFromServer( void ) {
     _buf.append(buf, nbytes);
 }
 
-
-
 void Bot::processBuffer( void ) {
     size_t delimPos = 0;
     while ((delimPos = _buf.find("\r\n")) != std::string::npos) {
@@ -244,6 +268,9 @@ void Bot::processMessage( const std::string& message ) {
         else if (tok == "!answer") {
             sendPRIVMSG(receiver, "42");
         }
+        else if (tok == "!joke") {
+            this->featJoke(receiver);
+        }
 
         this->featMonitor(receiver, sender, tok);
         ++it;
@@ -278,6 +305,16 @@ void Bot::featMonitor( const std::string& receiver, const std::string& sender,  
         this->sendPRIVMSG(receiver, msg);
         // TODO: Add kick if possible
     }
+}
+
+void Bot::featJoke( const std::string& receiver ) {
+    // programm still runs with broken or empty jokes list
+    if (_jokes.empty()) {
+        sendPRIVMSG(receiver, "Life is too depressing for jokes...");
+        return;
+    }
+
+    sendPRIVMSG(receiver, _jokes.at(0));
 }
 
 // ====================================================================================================================
@@ -336,6 +373,10 @@ std::string Bot::sanitizeToken( const std::string& sender ) {
     std::string res = "";
     std::string::const_iterator it = sender.begin();
     if (sender.length() > 0 && sender.at(0) == ':') {
+        ++it;
+    }
+    if (it != sender.end() && *it == '!') { // to still get bot cmds firing
+        res.push_back(*it);
         ++it;
     }
     while (it != sender.end() && (*it) != ' '  && (*it) != '!'
