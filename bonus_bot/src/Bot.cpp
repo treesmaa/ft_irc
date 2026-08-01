@@ -251,6 +251,12 @@ void Bot::processMessage( const std::string& message ) {
         if (tok == "!time") {
             sendPRIVMSG(receiver, "Its currently");
         }
+        else if (tok == "!panic") {
+            sendPRIVMSG(receiver, "don't");
+        }
+        else if (tok == "!answer") {
+            sendPRIVMSG(receiver, "42");
+        }
 
         ++it;
     }
