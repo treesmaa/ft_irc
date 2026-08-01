@@ -247,6 +247,10 @@ QUIT
 ```
 
 
+## Bonus: Bot
+
+As a bonus, this project includes an IRC bot: an independent client binary that connects to the server the same way any user would. For what it does and how to build and run it, see [`bonus_bot/README.md`](bonus_bot/README.md).
+
 ## Resources
 
 - [Internet Relay Chat Protocol (RFC 1459)](https://datatracker.ietf.org/doc/html/rfc1459)
