@@ -177,6 +177,11 @@ int Bot::run( void ) {
                 std::cout << "Bot shutdown requested." << std::endl;
                 g_stop = 1;
             }
+            else if (!input.empty() && input.at(0) == '/') {
+                input.erase(0,1);
+                input = input +  CRLF;
+                this->sendToServer(input);
+            }
         }
     }
     return _exit;
