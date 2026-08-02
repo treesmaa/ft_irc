@@ -939,13 +939,15 @@ void CommandHandler::handleKick(s_msg *message, Client& client) {
 		return;
 	}
 
+	std::string kick_msg = makePrefix(client) + " KICK " + channel_name + " " + nick_to_kick + " :" + reason + CRLF;
 	thisChannel.removeMember(target_client->getFd());
 	target_client->getChannels().erase(channel_name);
 
-	_server.sendToClient(target_client->getFd(), makePrefix(client) + " KICK " + channel_name + " " + nick_to_kick + " :" + reason + CRLF);
+	_server.sendToClient(target_client->getFd(), kick_msg);
+	_server.broadcastToChannel(channel_name, kick_msg, target_client->getFd());
 
-	std::string kick_msg = makePrefix(client) + " KICK " + channel_name + " " + nick_to_kick + " :" + reason + CRLF;
-	_server.broadcastToChannel(channel_name, kick_msg, -1);
+	if (thisChannel.isEmpty())
+		channels.erase(it);
 }
 
 void CommandHandler::handlePing(s_msg *message, Client& client) {
@@ -953,7 +955,7 @@ void CommandHandler::handlePing(s_msg *message, Client& client) {
         _server.sendToClient(client.getFd(), formReply(ERR_NOORIGIN, client));
         return;
     }
-	_server.sendToClient(client.getFd(), "PONG " + message->parameters[0] + CRLF);
+	_server.sendToClient(client.getFd(), ":" SERVER " PONG " + message->parameters[0] + CRLF);
 }
 
 void CommandHandler::handleCAP(s_msg *message, Client& client) {

@@ -12,7 +12,7 @@ Server::~Server() {
     if (_server_fd != -1)
         close(_server_fd);
     for (std::vector<pollfd>::iterator it = _pfds.begin(); it != _pfds.end(); ++it) {
-        if (it->fd != -1)
+        if (it->fd != -1 && it->fd != _server_fd)
             close(it->fd);
     }
 }
