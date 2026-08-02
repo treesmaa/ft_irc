@@ -247,7 +247,6 @@ int Server::readClientData(int idx) {
     return 0;
 }
 
-//TODO: check if continues lead to infinite loop (i++ never happens)
 void Server::boot() {
 
     serverSocketSetup();
