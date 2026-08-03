@@ -14,6 +14,9 @@
 #define RPL_YOURHOST	std::string(" 002 ")
 #define RPL_CREATED		std::string(" 003 ")
 #define RPL_MYINFO		std::string(" 004 ")
+// Mode changes limit
+#define MAX_MODES		3 // Maximum number of modes that can be set in a single MODE command
+
 //No modes set
 #define NO_MODES_SET	std::string(" No modes set ")
 

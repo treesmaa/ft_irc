@@ -599,7 +599,7 @@ void CommandHandler::handleMode(s_msg *message, Client& client) {
 	bool adding = true;
 	size_t keyWord = 2;
 
-	for (size_t i = 0; i < modes.size(); ++i) {
+	for (size_t i = 0; i <= MAX_MODES; ++i) {
 		char mode = modes[i];
 
 		if (mode == '+') {
