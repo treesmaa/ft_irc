@@ -48,7 +48,7 @@ std::map<int, std::string> initReplies() {
     r[ERR_NOSUCHNICK]         = " :No such nick/channel";                  // 401
 
     // MODE
-    r[ERR_UNKNOWNMODE]        = " :No such mode modifier";            // 472
+    r[ERR_UNKNOWNMODE]        = " :is unknown mode char to me";            // 472
 	r[ERR_NOTNUMBER]          = " :Parameter is not a number";            // 696
 	r[ERR_OVERFLOW]           = " :Parameter is too large";            // 697
 
@@ -78,6 +78,8 @@ std::string CommandHandler::formReply(int code, std::string str, Client& client)
         oss << ":" << SERVER << " " << code << " " << client.getNickname() << " " << str << _replies[code] << CRLF;
     else if (code == ERR_NORECIPIENT)
         oss << ":" << SERVER << " " << code << " " << client.getNickname() << _replies[code] << " (" << str << ")" << CRLF;
+	else if (code == ERR_UNKNOWNMODE)
+		oss << ":" << SERVER << " " << code << " " << client.getNickname() << " : " << str << _replies[code] << CRLF;
     else
         oss << ":" << SERVER << " " << code << " " << client.getNickname() << _replies[code] << CRLF;
     return oss.str();
@@ -781,6 +783,9 @@ void CommandHandler::handleMode(s_msg *message, Client& client) {
 			);
 			continue;
 		}
+
+		if (i >= modes.size())
+			break;
 
 		std::string unknownMode(1, mode);
 
