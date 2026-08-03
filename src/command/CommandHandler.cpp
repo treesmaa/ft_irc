@@ -32,6 +32,11 @@ std::map<int, std::string> initReplies() {
 	// MODE success
 	r[RPL_CHANNELMODEIS]      = "";                                        // 324
 	r[RPL_INVITING]           = " :Inviting";                              // 341
+	r[RPL_WHOREPLY]			 = " :Who reply";							  // 352
+	r[RPL_ENDOFWHO]			 = " :End of /WHO list";					  // 315
+	r[RPL_WHOISUSER]		 = " :Whois user";							  // 311
+	r[RPL_ENDOFWHOIS]		 = " :End of /WHOIS list";					  // 318
+	r[RPL_BANNLIST]			 = " :End of channel's ban list";			// 368
 
     // Channel operator permissions
     r[ERR_CHANOPRIVSNEEDED]   = " :You're not channel operator";           // 482
@@ -43,7 +48,7 @@ std::map<int, std::string> initReplies() {
     r[ERR_NOSUCHNICK]         = " :No such nick/channel";                  // 401
 
     // MODE
-    r[ERR_UNKNOWNMODE]        = " :No such mode modifier";            // 472
+    r[ERR_UNKNOWNMODE]        = " :is unknown mode char to me";            // 472
 	r[ERR_NOTNUMBER]          = " :Parameter is not a number";            // 696
 	r[ERR_OVERFLOW]           = " :Parameter is too large";            // 697
 
@@ -67,10 +72,14 @@ std::string CommandHandler::formReply(int code, std::string str, Client& client)
     if (code == ERR_NEEDMOREPARAMS || code == ERR_ERRONEUSNICKNAME || code == ERR_NICKNAMEINUSE
         || code == ERR_NOSUCHNICK || code == ERR_CANNOTSENDTOCHAN || code == ERR_NOSUCHCHANNEL || code == ERR_TOOMANYCHANNELS 
         || code == ERR_CHANNELISFULL || code == ERR_INVITEONLYCHAN || code == ERR_BANNEDFROMCHAN || code == ERR_BADCHANNELKEY
-		|| code == ERR_NOTONCHANNEL || code == ERR_CHANOPRIVSNEEDED || code == ERR_NOTONCHANNEL || code == RPL_CHANNELMODEIS)
+		|| code == ERR_NOTONCHANNEL || code == ERR_CHANOPRIVSNEEDED || code == ERR_NOTONCHANNEL || code == RPL_CHANNELMODEIS
+		|| code == RPL_INVITING || code == RPL_WHOREPLY || code == RPL_ENDOFWHO || code == RPL_WHOISUSER || code == RPL_ENDOFWHOIS
+		|| code == RPL_BANNLIST)
         oss << ":" << SERVER << " " << code << " " << client.getNickname() << " " << str << _replies[code] << CRLF;
     else if (code == ERR_NORECIPIENT)
         oss << ":" << SERVER << " " << code << " " << client.getNickname() << _replies[code] << " (" << str << ")" << CRLF;
+	else if (code == ERR_UNKNOWNMODE)
+		oss << ":" << SERVER << " " << code << " " << client.getNickname() << " : " << str << _replies[code] << CRLF;
     else
         oss << ":" << SERVER << " " << code << " " << client.getNickname() << _replies[code] << CRLF;
     return oss.str();
@@ -214,6 +223,14 @@ void CommandHandler::handleUser(s_msg *message, Client& client) {
 
 static std::string makePrefix(Client& client) {
     return ":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHost();
+}
+
+static std::string makeUserReply(int code, const Client& requester, const Client& target) {
+	std::ostringstream oss;
+	oss << ":" << SERVER << " " << code << " " << requester.getNickname()
+		<< " " << target.getNickname() << "!" << target.getUsername()
+		<< "@" << target.getHost() << " :Whois user" << CRLF;
+	return oss.str();
 }
 
 void CommandHandler::handleQuit(s_msg* message, Client& client) {
@@ -506,149 +523,277 @@ void CommandHandler::sendModeSuccess(const std::string& mode, Client& client, co
 
 void CommandHandler::handleMode(s_msg *message, Client& client) {
 	if (!client.isRegistered()) {
-		_server.sendToClient(client.getFd(), formReply(ERR_NOTREGISTERED, client));
+		_server.sendToClient(
+			client.getFd(),
+			formReply(ERR_NOTREGISTERED, client)
+		);
 		return;
 	}
-	
+
 	if (message->parameters.empty()) {
-		_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
+		_server.sendToClient(
+			client.getFd(),
+			formReply(ERR_NEEDMOREPARAMS, message->command, client)
+		);
 		return;
 	}
-	
+
 	std::string target = message->parameters[0];
+
 	if (!isChannelName(target)) {
-    // User MODE is not implemented.
-    return;
+		// User MODE is not implemented.
+		return;
 	}
 
-    std::map<std::string, Channel>& channels = _server.getChannels();
-    std::map<std::string, Channel>::iterator it = channels.find(message->parameters[0]);
-    if (it == channels.end()) {
-        _server.sendToClient(client.getFd(), formReply(ERR_NOSUCHCHANNEL, message->parameters[0], client));
-        return;
-    }
+	std::map<std::string, Channel>& channels = _server.getChannels();
+	std::map<std::string, Channel>::iterator it = channels.find(target);
 
-    Channel& thisChannel = it->second;
+	if (it == channels.end()) {
+		_server.sendToClient(
+			client.getFd(),
+			formReply(ERR_NOSUCHCHANNEL, target, client)
+		);
+		return;
+	}
 
+	Channel& thisChannel = it->second;
 	std::string appliedModes = getChannelModes(thisChannel);
-	
+
+	// MODE #channel
 	if (message->parameters.size() < 2) {
 		if (appliedModes == "+") {
-			_server.sendToClient(client.getFd(), formReply(RPL_CHANNELMODEIS, target, client));
-		return;
+			_server.sendToClient(
+				client.getFd(),
+				formReply(RPL_CHANNELMODEIS, target, client)
+			);
+		} else {
+			_server.sendToClient(
+				client.getFd(),
+				formReply(
+					RPL_CHANNELMODEIS,
+					target + " " + appliedModes,
+					client
+				)
+			);
 		}
-		_server.sendToClient(client.getFd(), formReply(RPL_CHANNELMODEIS, target + " " + appliedModes, client));
+		return;
+	}
+
+	std::string modes = message->parameters[1];
+
+	// Ban list is not implemented.
+	if (modes == "b" || modes == "+b") {
+		_server.sendToClient(
+			client.getFd(),
+			formReply(RPL_BANNLIST, target, client)
+		);
 		return;
 	}
 
 	if (!thisChannel.isOperator(client.getFd())) {
-		_server.sendToClient(client.getFd(), formReply(ERR_CHANOPRIVSNEEDED, message->parameters[0], client));
+		_server.sendToClient(
+			client.getFd(),
+			formReply(ERR_CHANOPRIVSNEEDED, target, client)
+		);
 		return;
 	}
 
-	if (message->parameters[1][0] == '+') {
-		if (message->parameters[1].find('o') != std::string::npos) {
-			if (message->parameters.size() < 3) {
-				_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
-				return;
+	bool adding = true;
+	size_t keyWord = 2;
+
+	for (size_t i = 0; i <= MAX_MODES; ++i) {
+		char mode = modes[i];
+
+		if (mode == '+') {
+			adding = true;
+			continue;
+		}
+
+		if (mode == '-') {
+			adding = false;
+			continue;
+		}
+
+		if (mode == 'i') {
+			thisChannel.setInviteOnly(adding);
+			sendModeSuccess(adding ? "+i" : "-i", client, target);
+			continue;
+		}
+
+		if (mode == 't') {
+			thisChannel.setRestrictedTopic(adding);
+			sendModeSuccess(adding ? "+t" : "-t", client, target);
+			continue;
+		}
+
+		if (mode == 'k') {
+			if (adding) {
+				if (keyWord >= message->parameters.size()) {
+					_server.sendToClient(
+						client.getFd(),
+						formReply(
+							ERR_NEEDMOREPARAMS,
+							message->command,
+							client
+						)
+					);
+					continue;
+				}
+
+				std::string password = message->parameters[keyWord++];
+
+				thisChannel.setPassword(password);
+				sendModeSuccess(
+					"+k " + password,
+					client,
+					target
+				);
+			} else {
+				
+				thisChannel.removePassword();
+				sendModeSuccess("-k", client, target);
 			}
-			std::string nick_to_op = message->parameters[2];
-			Client* target_client = _server.getClientByNickname(nick_to_op);
-			if (!target_client) {
-				_server.sendToClient(client.getFd(), formReply(ERR_NOSUCHNICK, nick_to_op, client));
-				return;
+
+			continue;
+		}
+
+		if (mode == 'o') {
+			if (keyWord >= message->parameters.size()) {
+				_server.sendToClient(
+					client.getFd(),
+					formReply(
+						ERR_NEEDMOREPARAMS,
+						message->command,
+						client
+					)
+				);
+				continue;
 			}
-			if (!thisChannel.hasMember(target_client->getFd())) {
-				_server.sendToClient(client.getFd(), formReply(ERR_USERNOTINCHANNEL, nick_to_op, target, client));
-				return;
+
+			
+			std::string nickname = message->parameters[keyWord++];
+			Client* targetClient =
+				_server.getClientByNickname(nickname);
+
+			if (!targetClient) {
+				_server.sendToClient(
+					client.getFd(),
+					formReply(ERR_NOSUCHNICK, nickname, client)
+				);
+				continue;
 			}
-			thisChannel.addOperator(target_client->getFd());
-			sendModeSuccess("+o " + nick_to_op, client, target);
-		} else if (message->parameters[1].find('i') != std::string::npos) {
-			thisChannel.setInviteOnly(true);
-			sendModeSuccess("+i", client, target);
-		} else if (message->parameters[1].find('k') != std::string::npos) {
-			if (message->parameters.size() < 3) {
-				_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
-				return;
+
+			if (!thisChannel.hasMember(targetClient->getFd())) {
+				_server.sendToClient(
+					client.getFd(),
+					formReply(
+						ERR_USERNOTINCHANNEL,
+						nickname,
+						target,
+						client
+					)
+				);
+				continue;
 			}
-			thisChannel.setPassword(message->parameters[2]);
-			sendModeSuccess("+k " + message->parameters[2], client, target);
-		} else if (message->parameters[1].find('l') != std::string::npos) {
-			if (message->parameters.size() < 3) {
-				_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
-				return;
+
+			if (adding) {
+				thisChannel.addOperator(targetClient->getFd());
+				sendModeSuccess(
+					"+o " + nickname,
+					client,
+					target
+				);
+			} else {
+				thisChannel.removeOperator(targetClient->getFd());
+				sendModeSuccess(
+					"-o " + nickname,
+					client,
+					target
+				);
 			}
-			std::string limit_str = message->parameters[2];
-			for (ulong i = 0; i < limit_str.size(); ++i) {
-				if (!std::isdigit(limit_str[i])) {
-					_server.sendToClient(client.getFd(), formReply(ERR_NOTNUMBER, message->command, client));
-					return;
+
+			continue;
+		}
+
+		if (mode == 'l') {
+			if (!adding) {
+				thisChannel.setMemberLimit(-1);
+				sendModeSuccess("-l", client, target);
+				continue;
+			}
+
+			if (keyWord >= message->parameters.size()) {
+				_server.sendToClient(
+					client.getFd(),
+					formReply(
+						ERR_NEEDMOREPARAMS,
+						message->command,
+						client
+					)
+				);
+				continue;
+			}
+
+			std::string limitString =
+				message->parameters[keyWord++];
+
+			bool validNumber = !limitString.empty();
+
+			for (size_t j = 0; j < limitString.size(); ++j) {
+				unsigned char character =
+					static_cast<unsigned char>(limitString[j]);
+
+				if (!std::isdigit(character)) {
+					validNumber = false;
+					break;
 				}
 			}
-			int limit = std::atoi(limit_str.c_str());
+
+			if (!validNumber) {
+				_server.sendToClient(
+					client.getFd(),
+					formReply(
+						ERR_NOTNUMBER,
+						message->command,
+						client
+					)
+				);
+				continue;
+			}
+
+			int limit = std::atoi(limitString.c_str());
+
 			if (limit <= 0) {
-				_server.sendToClient(client.getFd(), formReply(ERR_OVERFLOW, message->command, client));
-				return;
+				_server.sendToClient(
+					client.getFd(),
+					formReply(
+						ERR_OVERFLOW,
+						message->command,
+						client
+					)
+				);
+				continue;
 			}
-			thisChannel.setMemberLimit(limit);
-			sendModeSuccess("+l " + message->parameters[2], client, target);
-		} else if (message->parameters[1].find('t') != std::string::npos) {
-			thisChannel.setRestrictedTopic(true);
-			sendModeSuccess("+t", client, target);
-		} else {
-			_server.sendToClient(client.getFd(), formReply(ERR_UNKNOWNMODE, message->parameters[1], client));
-			return;
-		}
-	} else if (message->parameters[1][0] == '-') {
-		if (message->parameters[1].find('o') != std::string::npos) {
-			if (message->parameters.size() < 3) {
-				_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
-				return;
-			}
-			std::string nick_to_deop = message->parameters[2];
-			Client* target_client = _server.getClientByNickname(nick_to_deop);
-			if (!target_client) {
-				_server.sendToClient(client.getFd(), formReply(ERR_NOSUCHNICK, nick_to_deop, client));
-				return;
-			}
-			if (!thisChannel.hasMember(target_client->getFd())) {
-				_server.sendToClient(client.getFd(), formReply(ERR_USERNOTINCHANNEL, nick_to_deop, target, client));
-				return;
-			}
-			thisChannel.removeOperator(target_client->getFd());
-			sendModeSuccess("-o " + nick_to_deop, client, target);
-		} else if (message->parameters[1].find('i') != std::string::npos) {
-			thisChannel.setInviteOnly(false);
-			sendModeSuccess("-i", client, target);
-		} else if (message->parameters[1].find('k') != std::string::npos) {
-			if (thisChannel.hasPassword()) {
-				if (message->parameters.size() < 3) {
-					_server.sendToClient(client.getFd(), formReply(ERR_NEEDMOREPARAMS, message->command, client));
-					return;
-				}
-				if (message->parameters[2] != thisChannel.getPassword()) {
-					_server.sendToClient(client.getFd(), formReply(ERR_BADCHANNELKEY, target, client));
-					return;
-				}
-			}
-			thisChannel.removePassword();
-			sendModeSuccess("-k", client, target);
-		} else if (message->parameters[1].find('l') != std::string::npos) {
-			thisChannel.setMemberLimit(-1); 
-			sendModeSuccess("-l", client, target);
-		} else if (message->parameters[1].find('t') != std::string::npos) {
-			thisChannel.setRestrictedTopic(false);
-			sendModeSuccess("-t", client, target);
-		} else {
-			_server.sendToClient(client.getFd(), formReply(ERR_UNKNOWNMODE, message->parameters[1], client));
-			return;
-		}
-	} else {
-		_server.sendToClient(client.getFd(), formReply(ERR_UNKNOWNMODE, message->parameters[1], client));
-		return;
-	}
 
+			thisChannel.setMemberLimit(limit);
+			sendModeSuccess(
+				"+l " + limitString,
+				client,
+				target
+			);
+			continue;
+		}
+
+		if (i >= modes.size())
+			break;
+
+		std::string unknownMode(1, mode);
+
+		_server.sendToClient(
+			client.getFd(),
+			formReply(ERR_UNKNOWNMODE, unknownMode, client)
+		);
+	}
 }
 
 void CommandHandler::handleInvite(s_msg *message, Client& client) {
@@ -794,13 +939,15 @@ void CommandHandler::handleKick(s_msg *message, Client& client) {
 		return;
 	}
 
+	std::string kick_msg = makePrefix(client) + " KICK " + channel_name + " " + nick_to_kick + " :" + reason + CRLF;
 	thisChannel.removeMember(target_client->getFd());
 	target_client->getChannels().erase(channel_name);
 
-	_server.sendToClient(target_client->getFd(), makePrefix(client) + " KICK " + channel_name + " " + nick_to_kick + " :" + reason + CRLF);
+	_server.sendToClient(target_client->getFd(), kick_msg);
+	_server.broadcastToChannel(channel_name, kick_msg, target_client->getFd());
 
-	std::string kick_msg = makePrefix(client) + " KICK " + channel_name + " " + nick_to_kick + " :" + reason + CRLF;
-	_server.broadcastToChannel(channel_name, kick_msg, -1);
+	if (thisChannel.isEmpty())
+		channels.erase(it);
 }
 
 void CommandHandler::handlePing(s_msg *message, Client& client) {
@@ -820,6 +967,113 @@ void CommandHandler::handleCAP(s_msg *message, Client& client) {
 		_server.sendToClient(client.getFd(), ":" SERVER " CAP * LS :" CRLF);
 }
 
+static std::string makeWhoReply(Client& requester, const Client& target, const std::string& channel) {
+	std::ostringstream oss;
+	oss << ":" << SERVER << " " << RPL_WHOREPLY << " " << requester.getNickname()
+		<< " " << channel << " " << target.getUsername() << " "
+		<< target.getHost() << " " << SERVER << " "
+		<< target.getNickname() << " H :0 " << target.getUsername() << CRLF;
+	return oss.str();
+}
+
+void CommandHandler::handleWho(s_msg *message, Client& client) {
+	if (!client.isRegistered()) {
+		_server.sendToClient(
+			client.getFd(),
+			formReply(ERR_NOTREGISTERED, client)
+		);
+		return;
+	}
+
+	if (message->parameters.empty()) {
+		_server.sendToClient(
+			client.getFd(),
+			formReply(ERR_NEEDMOREPARAMS, message->command, client)
+		);
+		return;
+	}
+
+	std::string target = message->parameters[0];
+
+	std::map<std::string, Channel>& channels = _server.getChannels();
+	std::map<std::string, Channel>::iterator channelIt =
+		channels.find(target);
+
+	if (channelIt == channels.end()) {
+		_server.sendToClient(
+			client.getFd(),
+			formReply(ERR_NOSUCHCHANNEL, target, client)
+		);
+		return;
+	}
+
+	const std::set<int>& members = channelIt->second.getMembers();
+	const std::map<int, Client>& clients = _server.getClients();
+
+	for (std::set<int>::const_iterator memberIt = members.begin();
+		 memberIt != members.end();
+		 ++memberIt) {
+
+		std::map<int, Client>::const_iterator clientIt =
+			clients.find(*memberIt);
+
+		if (clientIt == clients.end())
+			continue;
+
+		const Client& targetClient = clientIt->second;
+
+		_server.sendToClient(
+			client.getFd(),
+			makeWhoReply(client, targetClient, target)
+		);
+	}
+
+	_server.sendToClient(
+		client.getFd(),
+		formReply(RPL_ENDOFWHO, target, client)
+	);
+}
+
+
+void CommandHandler::handleWhois(s_msg *message, Client& client) {
+	if (!client.isRegistered()) {
+		_server.sendToClient(
+			client.getFd(),
+			formReply(ERR_NOTREGISTERED, client)
+		);
+		return;
+	}
+
+	if (message->parameters.empty()) {
+		_server.sendToClient(
+			client.getFd(),
+			formReply(ERR_NEEDMOREPARAMS, message->command, client)
+		);
+		return;
+	}
+
+	std::string nickname = message->parameters[0];
+
+	Client* target_client = _server.getClientByNickname(nickname);
+	if (!target_client) {
+		_server.sendToClient(
+			client.getFd(),
+			formReply(ERR_NOSUCHNICK, nickname, client)
+		);
+		return;
+	}
+
+	_server.sendToClient(
+		client.getFd(),
+		makeUserReply(RPL_WHOISUSER, client, *target_client)
+	);
+
+	_server.sendToClient(
+		client.getFd(),
+		formReply(RPL_ENDOFWHOIS, nickname, client)
+	);
+}
+
 void CommandHandler::handleCommand(s_msg *message, Client& client) {
     if (message->command == "PASS")
         handlePass(message, client);
@@ -836,7 +1090,7 @@ void CommandHandler::handleCommand(s_msg *message, Client& client) {
     else if (message->command == "PRIVMSG" || message->command == "NOTICE")
         handlePrivmsg(message, client);
 	else if (message->command == "MODE")
-		handleMode(message, client); // multiple modes can be applied at once, and mode info specifiers
+		handleMode(message, client); 
 	else if (message->command == "INVITE")
 		handleInvite(message, client);
 	else if (message->command == "KICK")
@@ -847,7 +1101,11 @@ void CommandHandler::handleCommand(s_msg *message, Client& client) {
 		handlePing(message, client);
 	else if (message->command == "CAP")
 		handleCAP(message, client);
+	else if (message->command == "WHO")
+		handleWho(message, client);
+	else if (message->command == "WHOIS")
+		handleWhois(message, client);
 	else
 		_server.sendToClient(client.getFd(), formReply(ERR_UNKNOWNCOMMAND, message->command, client));
-} //add "WHO" "WHOIS"
+}
 

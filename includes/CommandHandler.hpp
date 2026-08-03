@@ -14,6 +14,9 @@
 #define RPL_YOURHOST	std::string(" 002 ")
 #define RPL_CREATED		std::string(" 003 ")
 #define RPL_MYINFO		std::string(" 004 ")
+// Mode changes limit
+#define MAX_MODES		3 // Maximum number of modes that can be set in a single MODE command
+
 //No modes set
 #define NO_MODES_SET	std::string(" No modes set ")
 
@@ -24,8 +27,13 @@ enum Numerics {
     ERR_NOORIGIN          = 409,
 
 	//Channel modes
-	RPL_CHANNELMODEIS     = 324,
-	RPL_INVITING          = 341,
+	RPL_CHANNELMODEIS   = 324,
+	RPL_INVITING        = 341,
+	RPL_WHOREPLY		= 352,
+	RPL_ENDOFWHO		= 315,
+	RPL_WHOISUSER		= 311,
+	RPL_ENDOFWHOIS		= 318,
+	RPL_BANNLIST		= 368,
 
     // General errors
     ERR_NOSUCHNICK        = 401,
@@ -89,7 +97,10 @@ class CommandHandler {
 		void			handleTopic(s_msg *message, Client& client);
         void            handlePing(s_msg *message, Client& client);
         void            handleCAP(s_msg *message, Client& client);
-		
+
+		void 			handleWho(s_msg *message, Client& client);
+		void 		  	handleWhois(s_msg *message, Client& client);
+
         std::string     formReply(int code, std::string str, Client& client);
         std::string     formReply(int code, Client& client);
         std::string     formReply(int code, std::string nick, std::string command, Client& client);
