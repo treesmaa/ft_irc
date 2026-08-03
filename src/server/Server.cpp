@@ -123,7 +123,7 @@ void Server::serverSocketSetup() {
     int status = getaddrinfo(NULL, intToString(_port).c_str(), &hints, &servinfo);
     if ((status != 0))
         throw std::runtime_error(gai_strerror(status));
-    
+
     struct addrinfo *p;
     for (p = servinfo; p != NULL; p = p->ai_next) {
         _server_fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
@@ -146,7 +146,7 @@ void Server::serverSocketSetup() {
         }
         if (bind(_server_fd, p->ai_addr, p->ai_addrlen) == 0)
             break;
-        
+
         close(_server_fd);
         _server_fd = -1;
     }
@@ -261,7 +261,7 @@ void Server::boot() {
 
         size_t i = 0;
         while (i < _pfds.size()) {
-			if (_pfds[i].revents & POLLERR) {
+            if (_pfds[i].revents & POLLERR) {
                 if (_pfds[i].fd != _server_fd)
                     disconnectClient(_clients[_pfds[i].fd], "POLLERR");
                 continue;
@@ -276,19 +276,19 @@ void Server::boot() {
                     acceptNewClient();
                 }
                 else if (_pfds[i].fd == STDIN_FILENO) {
-					std::string input;
-					std::getline(std::cin, input);
+                    std::string input;
+                    std::getline(std::cin, input);
 
-					if (input == "QUIT" || input == "quit" || input == "exit" || input == "EXIT") {						
+                    if (input == "QUIT" || input == "quit" || input == "exit" || input == "EXIT") {
                         for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ) {
-                            Client &client = it->second;							
+                            Client &client = it->second;
                             ++it;
-							if (client.getFd() != -1)
-                            	disconnectClient(client, "Server shutdown, goodbye!");
-						}
-						std::cout << "Server shutdown requested." << std::endl;
-						g_stop = true;
-					}
+                            if (client.getFd() != -1)
+                                disconnectClient(client, "Server shutdown, goodbye!");
+                        }
+                    std::cout << "Server shutdown requested." << std::endl;
+                    g_stop = true;
+                    }
                 }
                 else {
                     if (readClientData(i) == -1) {
