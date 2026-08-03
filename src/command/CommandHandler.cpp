@@ -225,14 +225,9 @@ static std::string makePrefix(Client& client) {
 
 static std::string makeUserReply(int code, const Client& requester, const Client& target) {
 	std::ostringstream oss;
-	std::string suffix;
-	if (code == RPL_WHOREPLY)
-		suffix = " :Who reply";
-	else if (code == RPL_WHOISUSER)
-		suffix = " :Whois user";
 	oss << ":" << SERVER << " " << code << " " << requester.getNickname()
 		<< " " << target.getNickname() << "!" << target.getUsername()
-		<< "@" << target.getHost() << suffix << CRLF;
+		<< "@" << target.getHost() << " :Whois user" << CRLF;
 	return oss.str();
 }
 
@@ -955,7 +950,7 @@ void CommandHandler::handlePing(s_msg *message, Client& client) {
         _server.sendToClient(client.getFd(), formReply(ERR_NOORIGIN, client));
         return;
     }
-	_server.sendToClient(client.getFd(), ":" SERVER " PONG " + message->parameters[0] + CRLF);
+	_server.sendToClient(client.getFd(), "PONG " + message->parameters[0] + CRLF);
 }
 
 void CommandHandler::handleCAP(s_msg *message, Client& client) {
