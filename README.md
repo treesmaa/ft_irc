@@ -1,4 +1,4 @@
-_This project has been created as part of the 42 curriculum by teesmaa, rjuhasz._
+_This project has been created as part of the 42 curriculum by teesmaa, rjuhasz, adeters._
 
 # ft_irc
 A custom IRC server implemented based on the IRC protocol and written in C++, which allows users to connect and send direct messages privately and on channels.
