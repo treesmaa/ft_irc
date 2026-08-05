@@ -261,14 +261,11 @@ void Server::boot() {
 
         size_t i = 0;
         while (i < _pfds.size()) {
-            if (_pfds[i].revents & POLLERR) {
-                if (_pfds[i].fd != _server_fd)
-                    disconnectClient(_clients[_pfds[i].fd], "POLLERR");
-                continue;
-            }
-            else if (_pfds[i].revents & POLLHUP) {
-                if (_pfds[i].fd != _server_fd)
-                    disconnectClient(_clients[_pfds[i].fd], "POLLHUP");
+            if (_pfds[i].revents & (POLLERR | POLLHUP | POLLNVAL)) {
+                if (_pfds[i].fd == _server_fd)
+                    throw std::runtime_error(std::string("Listening socket became unavailable. ") + strerror(errno));
+                else
+                    disconnectClient(_clients[_pfds[i].fd], "client socket error");
                 continue;
             }
             if (_pfds[i].revents & POLLIN) {
